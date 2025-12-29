@@ -145,6 +145,35 @@ new_bit = left XOR (center OR right)
 3. **Immediate extraction**: No wasted iterations (generates 32 bytes per step)
 4. **Simple operations**: Only XOR, OR, and bit shifts (1 CPU cycle each)
 
+### Differences from Traditional Rule 30 RNG
+
+**Traditional approach (Wolfram's method):**
+- Evolves a large 1D CA over many generations
+- Extracts randomness from a **single column** (typically center) over time
+- Output: 1 bit per iteration from one cell's temporal evolution
+- Example: bit₀ from gen₀, bit₁ from gen₁, bit₂ from gen₂, etc.
+- Requires tracking spacetime history or evolving step-by-step
+
+**Our implementation (spatial extraction):**
+- Evolves a 256-bit circular strip one generation
+- Extracts randomness from **all 256 bits** of the current state
+- Output: 256 bits per iteration from entire spatial pattern
+- Repeats: evolve → extract all → evolve → extract all
+- **256× more efficient**: exploits Rule 30's spatial randomness, not just temporal
+
+**Key advantages of spatial extraction:**
+- ✓ **Much faster**: 256 bits per iteration vs 1 bit
+- ✓ **Simpler**: no spacetime history needed
+- ✓ **Circular topology**: ensures uniform mixing (all positions equivalent)
+- ✓ **Parallel-friendly**: processes entire state at once
+
+**Trade-off:**
+- Traditional method has longer "history" from single position's evolution
+- Our method samples the full spatial pattern at each instant
+- Both produce excellent randomness - ours is just more efficient
+
+This spatial extraction approach is why we achieve 5,000+ MB/s throughput while maintaining perfect entropy and distribution.
+
 ## Randomness Quality
 
 Rule 30 RNG has been extensively tested and shows exceptional randomness quality.
