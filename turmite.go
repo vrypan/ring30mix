@@ -24,6 +24,20 @@ func NewTurmite(x, y, dir int) *Turmite {
 	}
 }
 
+// InitGrid initializes the grid from a seed value
+// Spreads the 64-bit seed across the 128-bit grid (16 bytes)
+func (t *Turmite) InitGrid(seed uint64) {
+	// Use seed to generate initial grid state
+	// Spread 64 bits across 128 bits by repeating and mixing
+	for i := 0; i < 8; i++ {
+		// Extract byte from seed
+		b := byte((seed >> (i * 8)) & 0xFF)
+		t.grid[i] = b
+		// XOR with shifted pattern for second half
+		t.grid[i+8] = b ^ byte((seed>>(((i+3)*8)%64))&0xFF)
+	}
+}
+
 // Get returns the color value at cell (x, y)
 func (t *Turmite) Get(x, y int) int {
 	// Calculate bit position: (y*8 + x) * 2
@@ -54,7 +68,6 @@ func (t *Turmite) Set(x, y, val int) {
 func (t *Turmite) Step() {
 	state := t.Get(t.x, t.y)
 
-	// Inline DNA logic for performance
 	switch state {
 	case 0:
 		t.Set(t.x, t.y, 1)

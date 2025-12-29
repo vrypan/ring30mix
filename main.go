@@ -28,8 +28,8 @@ Seed Format (64 bits):
   bits 0-2:   x position [0-7]
   bits 3-5:   y position [0-7]
   bits 6-7:   direction [0-3] (0=N, 1=E, 2=S, 3=W)
-  bits 8-31:  iterations per 32-byte block (default: 1000)
-  bits 32-63: unused
+  bits 8-13:  iteration split [0-64] (first block, second gets 64-N)
+  bits 14-63: grid initialization
 
 Options:
   --seed N        Seed value (default: current time)
@@ -50,9 +50,8 @@ Examples:
   # Test randomness with ent
   turmite-rng --bytes 1048576 | ent
 
-  # Seed breakdown (example):
-  # Seed: 0x0000000000001C5  (453 decimal)
-  #   x=5, y=0, dir=3 (W), iterations=1
+  # Always runs exactly 64 iterations per 32-byte block
+  # Seed controls iteration split between first and second 16-byte blocks
 
 DNA Pattern: 1L.2L.3L.0R (LLLR)
   State 0 → paint 1, turn left
@@ -89,9 +88,9 @@ func generateBytes(seed uint64, count int) {
 	x := int(seed & 0x7)
 	y := int((seed >> 3) & 0x7)
 	dir := int((seed >> 6) & 0x3)
-	iterations := int((seed >> 8) & 0xFFFFFF)
-	if iterations == 0 {
-		iterations = 1000
+	iterSplit := int((seed >> 8) & 0x3F)
+	if iterSplit > 64 {
+		iterSplit = 64
 	}
 
 	dirNames := []string{"N", "E", "S", "W"}
@@ -100,7 +99,7 @@ func generateBytes(seed uint64, count int) {
 	fmt.Fprintf(os.Stderr, "  Seed: 0x%016X (%d)\n", seed, seed)
 	fmt.Fprintf(os.Stderr, "  Position: [%d,%d]\n", x, y)
 	fmt.Fprintf(os.Stderr, "  Direction: %s\n", dirNames[dir])
-	fmt.Fprintf(os.Stderr, "  Iterations: %d per 32-byte block\n", iterations)
+	fmt.Fprintf(os.Stderr, "  Iterations: %d + %d = 64 per 32-byte block\n", iterSplit, 64-iterSplit)
 	fmt.Fprintf(os.Stderr, "  DNA: 1L.2L.3L.0R (LLLR)\n")
 	fmt.Fprintf(os.Stderr, "Generating %d bytes...\n", count)
 

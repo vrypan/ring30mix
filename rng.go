@@ -6,9 +6,9 @@ import (
 
 // TurmiteRNG implements io.Reader using a turmite cellular automaton
 type TurmiteRNG struct {
-	turmite    *Turmite
-	iterations int
-	buffer     []byte
+	turmite         *Turmite
+	iterationsSplit int // iterations for first block (second block gets 64-N)
+	buffer          []byte
 }
 
 // New creates a new TurmiteRNG from a seed
@@ -16,23 +16,28 @@ type TurmiteRNG struct {
 //   bits 0-2:   x position [0-7]
 //   bits 3-5:   y position [0-7]
 //   bits 6-7:   direction [0-3] (N/E/S/W)
-//   bits 8-31:  iterations per 32-byte block
-//   bits 32-63: unused (for future extensions)
+//   bits 8-13:  iteration split [0-64] (first block iterations, second block gets 64-N)
+//   bits 14-63: grid initialization seed
 func New(seed uint64) *TurmiteRNG {
 	x := int(seed & 0x7)
 	y := int((seed >> 3) & 0x7)
 	dir := int((seed >> 6) & 0x3)
-	iterations := int((seed >> 8) & 0xFFFFFF)
+	iterationsSplit := int((seed >> 8) & 0x3F) // 6 bits: 0-63
 
-	// Default to 1000 iterations if not specified
-	if iterations == 0 {
-		iterations = 1000
+	// Clamp to valid range [0-64]
+	if iterationsSplit > 64 {
+		iterationsSplit = 64
 	}
 
+	turmite := NewTurmite(x, y, dir)
+
+	// Initialize grid from seed
+	turmite.InitGrid(seed)
+
 	return &TurmiteRNG{
-		turmite:    NewTurmite(x, y, dir),
-		iterations: iterations,
-		buffer:     make([]byte, 0, 32),
+		turmite:         turmite,
+		iterationsSplit: iterationsSplit,
+		buffer:          make([]byte, 0, 32),
 	}
 }
 
@@ -69,12 +74,12 @@ func (r *TurmiteRNG) Read(buf []byte) (n int, err error) {
 }
 
 // generate32Bytes runs the turmite and extracts 32 bytes
-// Uses Option A: run twice and concatenate grid states
+// Always runs exactly 64 iterations total, split between two blocks
 func (r *TurmiteRNG) generate32Bytes() []byte {
 	result := make([]byte, 32)
 
-	// Run turmite for N iterations
-	for i := 0; i < r.iterations; i++ {
+	// Run turmite for first block iterations
+	for i := 0; i < r.iterationsSplit; i++ {
 		r.turmite.Step()
 	}
 
@@ -82,8 +87,9 @@ func (r *TurmiteRNG) generate32Bytes() []byte {
 	grid1 := r.turmite.CopyGrid()
 	copy(result[0:16], grid1[:])
 
-	// Run another N iterations
-	for i := 0; i < r.iterations; i++ {
+	// Run remaining iterations (64 - N)
+	remaining := 64 - r.iterationsSplit
+	for i := 0; i < remaining; i++ {
 		r.turmite.Step()
 	}
 
