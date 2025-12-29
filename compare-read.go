@@ -131,7 +131,7 @@ func main() {
 	// Table header
 	fmt.Printf("%-15s", "RNG")
 	for _, size := range sizes {
-		fmt.Printf(" │ %-12s", formatSize(size))
+		fmt.Printf(" │ %-12s ", formatSize(size))
 	}
 	fmt.Println()
 

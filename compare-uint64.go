@@ -111,7 +111,7 @@ func main() {
 	// Separator
 	fmt.Print("───────────────")
 	for range callCounts {
-		fmt.Print("─┼──────────────")
+		fmt.Print("─┼─────────────")
 	}
 	fmt.Println()
 
