@@ -58,28 +58,54 @@ Generate random bytes:
 
 ### As a Library
 
+Rule30RNG is compatible with Go's `math/rand` interface and can be used as a drop-in replacement:
+
 ```go
 package main
 
 import (
     "fmt"
-    "io"
 )
 
 func main() {
     // Create RNG with seed
     rng := NewRule30(12345)
 
-    // Read random bytes (implements io.Reader)
+    // Compatible with math/rand interface
+    fmt.Printf("Uint32:    %d\n", rng.Uint32())
+    fmt.Printf("Uint64:    %d\n", rng.Uint64())
+    fmt.Printf("Int:       %d\n", rng.Int())
+    fmt.Printf("Intn(100): %d\n", rng.Intn(100))
+    fmt.Printf("Float64:   %.6f\n", rng.Float64())
+
+    // Distribution functions
+    fmt.Printf("NormFloat64: %.6f\n", rng.NormFloat64())
+    fmt.Printf("ExpFloat64:  %.6f\n", rng.ExpFloat64())
+
+    // Also implements io.Reader
     buf := make([]byte, 1024)
     n, err := rng.Read(buf)
     if err != nil {
         panic(err)
     }
-
     fmt.Printf("Generated %d random bytes\n", n)
 }
 ```
+
+**Available methods (math/rand compatible):**
+- `Uint32()` - random uint32
+- `Uint64()` - random uint64
+- `Int()` - non-negative random int
+- `Int31()` - non-negative random int32
+- `Int63()` - non-negative random int64
+- `Intn(n)` - random int in [0, n)
+- `Int31n(n)` - random int32 in [0, n)
+- `Int63n(n)` - random int64 in [0, n)
+- `Float32()` - random float32 in [0.0, 1.0)
+- `Float64()` - random float64 in [0.0, 1.0)
+- `NormFloat64()` - normally distributed float64 (mean=0, stddev=1)
+- `ExpFloat64()` - exponentially distributed float64 (rate=1)
+- `Read([]byte)` - fills byte slice with random data (io.Reader)
 
 ### Testing Randomness
 
