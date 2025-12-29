@@ -8,7 +8,6 @@ COMPARE_BIN = rule30-compare
 GOCMD = go
 GOBUILD = $(GOCMD) build
 GOCLEAN = $(GOCMD) clean
-GOTEST = $(GOCMD) test
 GOFMT = $(GOCMD) fmt
 GOMOD = $(GOCMD) mod
 
@@ -19,9 +18,8 @@ BUILD_FLAGS = -ldflags "$(LDFLAGS)"
 # Source files
 RULE30_SOURCES = rule30-main.go rule30-cli.go rule30.go
 COMPARE_SOURCES = compare.go rule30.go
-TEST_SOURCES = benchmark_test.go
 
-.PHONY: all rule30 compare test bench clean fmt help install compare-run
+.PHONY: all rule30 compare clean fmt help compare-run test-entropy smoke deps
 
 # Default target
 all: rule30 compare
@@ -47,22 +45,6 @@ compare-run: $(COMPARE_BIN)
 	@echo "Running performance comparison..."
 	./$(COMPARE_BIN)
 
-# Run Go tests
-test:
-	@echo "Running tests..."
-	$(GOTEST) -v
-
-# Run benchmarks
-bench:
-	@echo "Running benchmarks..."
-	$(GOTEST) -bench=. -benchmem
-
-# Run benchmarks with CPU profiling
-bench-profile:
-	@echo "Running benchmarks with profiling..."
-	$(GOTEST) -bench=. -benchmem -cpuprofile=cpu.prof
-	@echo "View profile with: go tool pprof cpu.prof"
-
 # Format code
 fmt:
 	@echo "Formatting code..."
@@ -81,25 +63,12 @@ clean:
 	rm -f *.dat
 	@echo "✓ Cleaned"
 
-# Install binaries to GOPATH/bin
-install: rule30 compare
-	@echo "Installing binaries..."
-	cp $(RULE30_BIN) $(GOPATH)/bin/
-	cp $(COMPARE_BIN) $(GOPATH)/bin/
-	@echo "✓ Installed to $(GOPATH)/bin/"
-
 # Download dependencies
 deps:
 	@echo "Downloading dependencies..."
 	$(GOMOD) download
 	$(GOMOD) tidy
 	@echo "✓ Dependencies updated"
-
-# Generate random test data
-testdata: $(RULE30_BIN)
-	@echo "Generating test data (1MB)..."
-	./$(RULE30_BIN) --bytes=1048576 > testdata.bin
-	@echo "✓ Generated testdata.bin (1MB)"
 
 # Test randomness with ent - compares all three RNGs
 test-entropy: rule30
@@ -123,14 +92,9 @@ help:
 	@echo "  rule30         Build rule30-rng CLI tool"
 	@echo "  compare        Build rule30-compare tool"
 	@echo "  compare-run    Run performance comparison"
-	@echo "  test           Run Go tests"
-	@echo "  bench          Run benchmarks"
-	@echo "  bench-profile  Run benchmarks with CPU profiling"
 	@echo "  fmt            Format code with gofmt"
 	@echo "  clean          Remove build artifacts"
-	@echo "  install        Install binaries to GOPATH/bin"
 	@echo "  deps           Download and tidy dependencies"
-	@echo "  testdata       Generate 1MB test file"
 	@echo "  test-entropy   Test randomness with ent tool"
 	@echo "  smoke          Quick smoke test"
 	@echo "  help           Show this help message"
@@ -138,5 +102,5 @@ help:
 	@echo "Examples:"
 	@echo "  make rule30"
 	@echo "  make compare-run"
-	@echo "  make bench"
+	@echo "  make test-entropy"
 	@echo "  make clean rule30"
