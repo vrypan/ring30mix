@@ -87,16 +87,34 @@ Use the `ent` tool to analyze randomness:
 
 ```bash
 # Generate test data
-./rule30-rng --bytes=1048576 > test.bin
+./rule30-rng --bytes=10485760 > test.bin
 
 # Analyze with ent
 ent test.bin
 ```
 
-Expected output should show:
-- Entropy: ~8.000000 bits per byte
-- Chi-square: ~255 (acceptable range: 200-310)
-- Monte Carlo π approximation: ~3.14
+**Actual test results (10MB sample):**
+
+```
+Entropy = 7.999982 bits per byte.
+
+Optimum compression would reduce the size
+of this 10485760 byte file by 0 percent.
+
+Chi square distribution for 10485760 samples is 264.55, and randomly
+would exceed this value 32.73 percent of the times.
+
+Arithmetic mean value of data bytes is 127.4987 (127.5 = random).
+Monte Carlo value for Pi is 3.140031105 (error 0.05 percent).
+Serial correlation coefficient is 0.000171 (totally uncorrelated = 0.0).
+```
+
+**Analysis:**
+- ✓ **Entropy**: 7.999982/8.0 (99.9998% of maximum) - Perfect
+- ✓ **Chi-square**: 264.55 (expected ~255, range 200-310) - Excellent
+- ✓ **Mean**: 127.4987 (expected 127.5) - Perfect uniformity
+- ✓ **Monte Carlo π**: 3.140031 (error 0.05%) - Excellent
+- ✓ **Serial correlation**: 0.000171 (expected 0.0) - No detectable pattern
 
 ## How It Works
 
@@ -129,6 +147,18 @@ new_bit = left XOR (center OR right)
 
 ## Randomness Quality
 
+Rule 30 RNG has been extensively tested and shows exceptional randomness quality.
+
+### Test Results Summary
+
+| Test | Result | Expected | Status |
+|------|--------|----------|--------|
+| **Shannon Entropy** | 7.999982 bits/byte | 8.0000 | ✓ Perfect (99.9998%) |
+| **Chi-Square** | 253.9 - 264.55 | ~255 (200-310) | ✓ Excellent |
+| **Arithmetic Mean** | 127.4987 | 127.5 | ✓ Perfect |
+| **Monte Carlo π** | 3.140031 | 3.141593 | ✓ 0.05% error |
+| **Serial Correlation** | 0.000171 | 0.0000 | ✓ Uncorrelated |
+
 ### Shannon Entropy
 
 Measures unpredictability of the data:
@@ -138,7 +168,7 @@ H = -Σ(p(i) × log₂(p(i)))
 ```
 
 - **Maximum**: 8.0000 bits/byte (perfect randomness)
-- **Rule 30 RNG**: 8.0000 bits/byte ✓
+- **Rule 30 RNG**: 7.999982 bits/byte (99.9998% of maximum) ✓
 
 ### Chi-Square Test
 
@@ -150,7 +180,15 @@ Measures uniformity of byte distribution:
 
 - **Expected value**: ~255 (for 256 byte values, df=255)
 - **Acceptable range**: 200-310 (95% confidence interval)
-- **Rule 30 RNG**: 253.9 ✓
+- **Rule 30 RNG**: 253.9 average (comparison tool), 264.55 (ent 10MB test) ✓
+
+### Additional Quality Metrics
+
+From `ent` statistical analysis tool (10MB sample):
+- **Arithmetic mean**: 127.4987 (expected 127.5) - Perfect uniformity
+- **Monte Carlo π estimate**: 3.140031105 (0.05% error) - Excellent
+- **Serial correlation**: 0.000171 (expected 0.0) - No byte-to-byte patterns
+- **Compression**: 0% - Data is incompressible (hallmark of randomness)
 
 ## Building
 
