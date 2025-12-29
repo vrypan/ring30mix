@@ -1,10 +1,34 @@
 # Binaries
-turmite-rng
-turmite-compare
+rule30-rng
+rule30-compare
 
 # Test/benchmark outputs
 *.bin
 *.dat
+*.test
 testdata.bin
 bench.txt
 results.txt
+
+# Profiling files
+*.prof
+cpu.prof
+mem.prof
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
