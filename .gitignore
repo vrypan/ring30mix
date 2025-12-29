@@ -1,0 +1,10 @@
+# Binaries
+turmite-rng
+turmite-compare
+
+# Test/benchmark outputs
+*.bin
+*.dat
+testdata.bin
+bench.txt
+results.txt
