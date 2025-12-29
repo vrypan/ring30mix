@@ -2,6 +2,7 @@
 
 # Binary names
 MAIN_BIN = turmite-rng
+RULE30_BIN = rule30-rng
 COMPARE_BIN = turmite-compare
 
 # Go parameters
@@ -18,13 +19,14 @@ BUILD_FLAGS = -ldflags "$(LDFLAGS)"
 
 # Source files
 MAIN_SOURCES = main.go turmite.go rng.go
-COMPARE_SOURCES = compare.go turmite.go rng.go
+RULE30_SOURCES = rule30-main.go rule30-cli.go rule30.go
+COMPARE_SOURCES = compare.go turmite.go rng.go rule30.go
 TEST_SOURCES = benchmark_test.go
 
-.PHONY: all build compare test bench clean fmt help install compare-run
+.PHONY: all build rule30 compare test bench clean fmt help install compare-run
 
 # Default target
-all: build compare
+all: build rule30 compare
 
 # Build the main CLI tool
 build: $(MAIN_BIN)
@@ -33,6 +35,14 @@ $(MAIN_BIN): $(MAIN_SOURCES)
 	@echo "Building $(MAIN_BIN)..."
 	$(GOBUILD) $(BUILD_FLAGS) -o $(MAIN_BIN) $(MAIN_SOURCES)
 	@echo "✓ Built $(MAIN_BIN)"
+
+# Build the Rule 30 CLI tool
+rule30: $(RULE30_BIN)
+
+$(RULE30_BIN): $(RULE30_SOURCES)
+	@echo "Building $(RULE30_BIN)..."
+	$(GOBUILD) $(BUILD_FLAGS) -o $(RULE30_BIN) $(RULE30_SOURCES)
+	@echo "✓ Built $(RULE30_BIN)"
 
 # Build the comparison tool
 compare: $(COMPARE_BIN)
@@ -74,6 +84,7 @@ clean:
 	@echo "Cleaning..."
 	$(GOCLEAN)
 	rm -f $(MAIN_BIN)
+	rm -f $(RULE30_BIN)
 	rm -f $(COMPARE_BIN)
 	rm -f *.prof
 	rm -f *.test
@@ -82,9 +93,10 @@ clean:
 	@echo "✓ Cleaned"
 
 # Install binaries to GOPATH/bin
-install: build compare
+install: build rule30 compare
 	@echo "Installing binaries..."
 	cp $(MAIN_BIN) $(GOPATH)/bin/
+	cp $(RULE30_BIN) $(GOPATH)/bin/
 	cp $(COMPARE_BIN) $(GOPATH)/bin/
 	@echo "✓ Installed to $(GOPATH)/bin/"
 
@@ -126,6 +138,7 @@ help:
 	@echo "Targets:"
 	@echo "  all            Build all binaries (default)"
 	@echo "  build          Build turmite-rng CLI tool"
+	@echo "  rule30         Build rule30-rng CLI tool"
 	@echo "  compare        Build turmite-compare tool"
 	@echo "  compare-run    Run performance comparison"
 	@echo "  test           Run Go tests"

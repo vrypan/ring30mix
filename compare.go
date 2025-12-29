@@ -126,6 +126,7 @@ func main() {
 	// Store results by RNG type and size
 	results := make(map[string]map[int]BenchResult)
 	results["TurmiteRNG"] = make(map[int]BenchResult)
+	results["Rule30RNG"] = make(map[int]BenchResult)
 	results["math/rand"] = make(map[int]BenchResult)
 	results["crypto/rand"] = make(map[int]BenchResult)
 
@@ -141,6 +142,12 @@ func main() {
 		result := runBenchmark("TurmiteRNG", turmite, size, iters)
 		results["TurmiteRNG"][size] = result
 		fmt.Printf("  ✓ TurmiteRNG:  %7.2f MB/s  (entropy: %.4f bits/byte)\n", result.throughput, result.entropy)
+
+		// Rule30RNG
+		rule30 := NewRule30(12345)
+		result = runBenchmark("Rule30RNG", rule30, size, iters)
+		results["Rule30RNG"][size] = result
+		fmt.Printf("  ✓ Rule30RNG:   %7.2f MB/s  (entropy: %.4f bits/byte)\n", result.throughput, result.entropy)
 
 		// math/rand
 		mathRng := newMathRandReader(12345)
@@ -172,7 +179,7 @@ func main() {
 	fmt.Println("───────────────┼──────────┼──────────┼──────────┼──────────┼──────────")
 
 	// Table rows
-	rngNames := []string{"TurmiteRNG", "math/rand", "crypto/rand"}
+	rngNames := []string{"TurmiteRNG", "Rule30RNG", "math/rand", "crypto/rand"}
 	for _, rngName := range rngNames {
 		fmt.Printf("%-15s", rngName)
 
@@ -259,7 +266,8 @@ func main() {
 
 	// Additional info
 	fmt.Println("Notes:")
-	fmt.Println("  • TurmiteRNG: Cellular automaton-based, deterministic")
+	fmt.Println("  • TurmiteRNG: 2D cellular automaton (turmite), deterministic")
+	fmt.Println("  • Rule30RNG:  1D cellular automaton (Rule 30), deterministic")
 	fmt.Println("  • math/rand:  Fast PRNG, deterministic")
 	fmt.Println("  • crypto/rand: Hardware-accelerated, cryptographically secure")
 	fmt.Println()
