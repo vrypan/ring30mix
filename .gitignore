@@ -3,6 +3,8 @@ rule30-rng
 rule30-compare
 stdlib-rng
 test-interface
+compare-read
+compare-uint64
 
 # Test/benchmark outputs
 *.bin
