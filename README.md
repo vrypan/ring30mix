@@ -1,10 +1,10 @@
-# Rule 30 RNG
+# Rule 30 RND
 
-A high-performance random number generator based on Rule 30 cellular automaton, implemented in Go.
+A high-performance pseudo-random number generator based on Rule 30 cellular automaton, implemented in Go.
 
 ## Overview
 
-Rule 30 RNG generates pseudo-random numbers using a 1D cellular automaton (Rule 30) on a circular 256-bit strip. Rule 30 is known for producing high-quality randomness and is famously used in Mathematica's default random number generator.
+Rule 30 RND generates pseudo-random numbers using a 1D cellular automaton (Rule 30) on a circular 256-bit strip. Rule 30 is known for producing high-quality randomness and is famously used in Mathematica's default random number generator.
 
 **Key Features:**
 - **Extremely fast**: 5,213 MB/s average throughput (4.2× faster than math/rand, 1.5× faster than crypto/rand)
@@ -19,7 +19,7 @@ Benchmark results on Apple Silicon (M-series):
 
 | RNG         | Throughput | vs Rule30 | Entropy | Chi-Square |
 |-------------|------------|-----------|---------|------------|
-| Rule30RNG   | 5,213 MB/s | 1.0×      | 8.0000  | 253.9      |
+| Rule30RND   | 5,213 MB/s | 1.0×      | 8.0000  | 253.9      |
 | crypto/rand | 3,515 MB/s | 0.67×     | 8.0000  | 245.7      |
 | math/rand   | 1,234 MB/s | 0.24×     | 8.0000  | 272.3      |
 
@@ -74,7 +74,7 @@ Generate random bytes:
 
 ### Using the Library
 
-Rule30 RNG is compatible with Go's `math/rand` interface and can be used as a drop-in replacement:
+Rule30 RND is compatible with Go's `math/rand` interface and can be used as a drop-in replacement:
 
 ```go
 package main
