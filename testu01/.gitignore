@@ -1,0 +1,15 @@
+# Compiled test programs
+test-smallcrush
+test-crush
+test-bigcrush
+
+# Go binaries
+mathrand-gen
+mathrandv2-gen
+
+# Object files
+*.o
+
+# Test output files
+*.res
+*.log
