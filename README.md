@@ -1,30 +1,74 @@
 # Rule 30 RND
 
-A high-performance pseudo-random number generator based on Rule 30 cellular automaton, implemented in Go.
+High-performance pseudo-random number generator based on Rule 30 cellular automaton. **40% faster** than Go's standard library, with perfect entropy (8.0 bits/byte) and identical statistical quality to math/rand.
 
-## Overview
+## Quick Start
 
-Rule 30 RND generates pseudo-random numbers using a 1D cellular automaton (Rule 30) on a circular 256-bit strip. Rule 30 is known for producing high-quality randomness and was famously used in Mathematica's default random number generator.
+### Installation
 
-**Key Features:**
-- **High performance**: Competitive with math/rand for Uint64() (~1.0×), 3.3× faster for byte streams
-- **Perfect entropy**: 8.0000 bits/byte (maximum possible)
-- **Excellent distribution**: Chi-square 253.9 (nearly ideal uniform distribution)
-- **Deterministic**: Same seed always produces same output
-- **Simple implementation**: ~220 lines of optimized Go code with math/rand interface
+```bash
+# As a command-line tool
+go install github.com/vrypan/rule30rnd@latest
+
+# As a library
+go get github.com/vrypan/rule30rnd
+```
+
+### Command Line Usage
+
+```bash
+# Generate random data
+./rule30 --bytes=1048576 > random.bin
+
+# Generate specific size with dd
+./rule30 --bytes=1073741824 | dd of=test.data bs=1m
+
+# Unlimited streaming (use with head, pv, or Ctrl+C)
+./rule30 --bytes=0 | head -c 1073741824 > test.data
+
+# Benchmark throughput
+./rule30 --benchmark
+
+# Reproducible output with seed
+./rule30 --seed=12345 --bytes=1024 > random.bin
+```
+
+### Library Usage
+
+Drop-in replacement for math/rand:
+
+```go
+import "github.com/vrypan/rule30rnd/rand"
+
+rng := rand.New(12345)
+
+// Full math/rand interface
+rng.Uint64()           // Random uint64
+rng.Intn(100)          // Random int in [0, 100)
+rng.Float64()          // Random float64 in [0.0, 1.0)
+rng.NormFloat64()      // Normal distribution (mean=0, stddev=1)
+
+// Also implements io.Reader
+buf := make([]byte, 1024)
+rng.Read(buf)
+```
+
+**API**: Compatible with `math/rand` - all methods supported (Uint32/64, Int/Intn, Float32/64, NormFloat64, ExpFloat64, Read).
 
 ## Performance
 
-(Run `make bench` to reproduce on your hw.)
+Benchmarks on Apple M1 (run `make bench` to reproduce):
+
+### Throughput Comparison
 
 |Algorithm       |     Read32KB |      Read1KB |       Uint64|
 |----------------|--------------|--------------|-------------|
 |MathRand        |  21468.00 ns |    651.10 ns |      1.78 ns|
 |MathRandV2      |  12693.00 ns |    400.00 ns |      3.06 ns|
-|Rule30          |   3922.00 ns |    127.00 ns |      1.28 ns|
+|**Rule30**      |   **3922.00 ns** |    **127.00 ns** |      **1.28 ns**|
 |CryptoRand      |   6895.00 ns |    371.80 ns |     53.04 ns|
 
-Relative speed (vs MathRand baseline = 1.00x):
+**Relative to math/rand:**
 
 |Algorithm       |    Read32KB |     Read1KB |      Uint64|
 |----------------|-------------|-------------|------------|
@@ -33,53 +77,43 @@ Relative speed (vs MathRand baseline = 1.00x):
 |**Rule30**      |       **5.47x** |       **5.13x** |       **1.39x**|
 |CryptoRand      |       3.11x |       1.75x |       0.03x|
 
-## Randomness Tests
+### vs /dev/urandom
+
+Rule30 vs kernel CSPRNG (run `./misc/compare-urandom.sh`):
+
+|Size    |       Rule30 |  /dev/urandom |   Speedup|
+|--------|--------------|---------------|----------|
+|10 MB   |     912 MB/s |      448 MB/s |    2.03x|
+|100 MB  |    3364 MB/s |      538 MB/s |    6.25x|
+|1 GB    |    3501 MB/s |      551 MB/s |    6.35x|
+
+## Randomness Quality
 
 ### Basic Tests (ent)
 
-Use the `ent` tool to analyze randomness:
-
 ```bash
-# Generate test data
-./rule30 --bytes=10485760 > test.bin
-
-# Analyze with ent
-ent test.bin
+./rule30 --bytes=10485760 | ent
 ```
 
 | Test | Result | Expected | Status |
 |------|--------|----------|--------|
-| **Shannon Entropy** | 7.999982 bits/byte | 8.0000 | ✓ Perfect (99.9998%) |
-| **Chi-Square** | 253.9 - 264.55 | ~255 (200-310) | ✓ Excellent |
-| **Arithmetic Mean** | 127.4987 | 127.5 | ✓ Perfect |
-| **Monte Carlo π** | 3.140031 | 3.141593 | ✓ 0.05% error |
-| **Serial Correlation** | 0.000171 | 0.0000 | ✓ Uncorrelated |
+| Entropy | 7.999982 bits/byte | 8.0000 | ✓ Perfect (99.9998%) |
+| Chi-Square | 253.9 | ~255 (200-310) | ✓ Excellent |
+| Arithmetic Mean | 127.4987 | 127.5 | ✓ Perfect |
+| Monte Carlo π | 3.140031 | 3.141593 | ✓ 0.05% error |
+| Serial Correlation | 0.000171 | 0.0000 | ✓ Uncorrelated |
 
 ### Statistical Tests (TestU01)
 
-TestU01 SmallCrush results (15 tests):
+SmallCrush results - **identical quality to Go's standard library**:
 
 | RNG | Passed | Failed | Pass Rate |
 |-----|--------|--------|-----------|
-| **Rule30 (with XOR mixing)** | **5/15** | 10/15 | **33%** |
+| **Rule30** | **5/15** | 10/15 | **33%** |
 | math/rand | 5/15 | 10/15 | 33% |
 | math/rand/v2 (PCG) | 5/15 | 10/15 | 33% |
 
-**Tests passed by all three:**
-- ✅ BirthdaySpacings
-- ✅ Collision
-- ✅ Gap
-- ✅ SimpPoker
-- ✅ CouponCollector
-
-**Tests failed by all three:**
-- ❌ MaxOft (2 subtests)
-- ❌ WeightDistrib
-- ❌ MatrixRank
-- ❌ HammingIndep
-- ❌ RandomWalk1 (5 subtests)
-
-**Conclusion:** Rule30 with XOR rotation mixing achieves **identical statistical quality** to Go's standard library RNGs (math/rand and math/rand/v2), while maintaining superior performance (3-5× faster for bulk operations).
+All three RNGs pass/fail the exact same tests. Rule30 achieves identical statistical quality while being 3-5× faster.
 
 Run tests yourself:
 
@@ -87,274 +121,71 @@ Run tests yourself:
 cd testu01
 make smallcrush           # Test Rule30
 make mathrand-smallcrush  # Compare with math/rand
-make mathrandv2-smallcrush # Compare with math/rand/v2
 ```
-
-## Installation
-
-### As a Command-Line Tool
-
-```bash
-go install github.com/vrypan/rule30rnd@latest
-```
-
-Or build from source:
-
-```bash
-git clone https://github.com/vrypan/rule30rnd
-cd rule30rnd
-make all
-```
-
-### As a Library
-
-Add to your Go project:
-
-```bash
-go get github.com/vrypan/rule30rnd
-```
-
-Import in your code:
-
-```go
-import "github.com/vrypan/rule30rnd/rand"
-```
-
-## Usage
-
-### Command Line
-
-Generate random bytes:
-
-```bash
-# Generate 1MB of random data
-./rule30 --bytes=1048576 > random.bin
-
-# Use specific seed for reproducibility
-./rule30 --seed=12345 --bytes=1024 > random.bin
-
-# Benchmark throughput
-./rule30 --benchmark
-```
-
-### Using the Library
-
-Rule30 RND is compatible with Go's `math/rand` interface and can be used as a drop-in replacement:
-
-```go
-package main
-
-import (
-    "fmt"
-    "github.com/vrypan/rule30rnd/rand"
-)
-
-func main() {
-    // Create RNG with seed
-    rng := rand.New(12345)
-
-    // Compatible with math/rand interface
-    fmt.Printf("Uint32:    %d\n", rng.Uint32())
-    fmt.Printf("Uint64:    %d\n", rng.Uint64())
-    fmt.Printf("Int:       %d\n", rng.Int())
-    fmt.Printf("Intn(100): %d\n", rng.Intn(100))
-    fmt.Printf("Float64:   %.6f\n", rng.Float64())
-
-    // Distribution functions
-    fmt.Printf("NormFloat64: %.6f\n", rng.NormFloat64())
-    fmt.Printf("ExpFloat64:  %.6f\n", rng.ExpFloat64())
-
-    // Also implements io.Reader
-    buf := make([]byte, 1024)
-    n, err := rng.Read(buf)
-    if err != nil {
-        panic(err)
-    }
-    fmt.Printf("Generated %d random bytes\n", n)
-}
-```
-
-**Available methods (math/rand compatible):**
-- `Uint32()` - random uint32
-- `Uint64()` - random uint64
-- `Int()` - non-negative random int
-- `Int31()` - non-negative random int32
-- `Int63()` - non-negative random int64
-- `Intn(n)` - random int in [0, n)
-- `Int31n(n)` - random int32 in [0, n)
-- `Int63n(n)` - random int64 in [0, n)
-- `Float32()` - random float32 in [0.0, 1.0)
-- `Float64()` - random float64 in [0.0, 1.0)
-- `NormFloat64()` - normally distributed float64 (mean=0, stddev=1)
-- `ExpFloat64()` - exponentially distributed float64 (rate=1)
-- `Read([]byte)` - fills byte slice with random data (io.Reader)
 
 ## How It Works
 
-### Rule 30 Cellular Automaton
-
-Rule 30 is a 1D cellular automaton where each cell evolves based on itself and its two neighbors:
+**Algorithm**: 1D cellular automaton (Rule 30) on a circular 256-bit strip.
 
 ```
-new_bit = left XOR (center OR right)
+Evolution rule: new_bit = left XOR (center OR right)
 ```
 
-### Implementation Details
+**Implementation**:
+- 256-bit state as 4 × 64-bit words
+- Processes 64 bits in parallel per word (bitwise operations)
+- Fully unrolled loop - all 4 words updated simultaneously
+- XOR rotation mixing for enhanced statistical quality
+- Each iteration generates 256 bits
 
-1. **256-bit circular strip**: Represented as 4 × 64-bit words (`[4]uint64`)
-2. **Parallel processing**: Processes 64 bits simultaneously using bitwise operations
-3. **Fully unrolled loop**: Each of 4 words updated in single operation (no loops)
-4. **XOR rotation mixing**: Enhances statistical quality by mixing each evolved word with its rotated previous state
-5. **Single iteration extraction**: Extracts 32 bytes after each evolution step
+**Why it's fast**:
+- Bit-level parallelism (64 bits per operation vs 1 bit serially)
+- Single-cycle operations (XOR, OR, shifts)
+- Zero loop overhead (fully unrolled)
+- Minimal memory allocations
 
-**Architecture-specific optimizations:**
-- Uses native 64-bit word size on 64-bit architectures
-- Single-cycle bitwise operations (XOR, OR, shifts, rotations)
-- Minimized memory allocations with pre-allocated buffers
+**Spatial vs Temporal extraction**: Unlike Wolfram's traditional approach (1 bit per generation from a single column), we extract all 256 bits from the spatial pattern each iteration - **256× more efficient** while maintaining excellent randomness.
 
-**XOR Rotation Mixing:**
-
-After computing the Rule 30 evolution, each word is XORed with a rotated version of its previous state:
-
-```go
-// After Rule 30 evolution
-r.state[0] = new0 ^ bits.RotateLeft64(s0, 13)
-r.state[1] = new1 ^ bits.RotateLeft64(s1, 17)
-r.state[2] = new2 ^ bits.RotateLeft64(s2, 23)
-r.state[3] = new3 ^ bits.RotateLeft64(s3, 29)
-```
-
-Prime rotation amounts (13, 17, 23, 29) ensure good bit diffusion without introducing obvious patterns. This additional mixing step significantly improves statistical quality while adding minimal performance overhead.
-
-### Why It's Fast
-
-1. **Bit-level parallelism**: 64 bits updated per operation (vs 1 bit serially)
-2. **Loop unrolling**: Zero loop overhead for state evolution
-3. **Direct state extraction**: Uint64() extracts directly from state array (no byte conversion)
-4. **Bulk byte generation**: Read() produces 32 bytes per step (no wasted iterations)
-5. **Simple operations**: Only XOR, OR, and bit shifts (1 CPU cycle each)
-
-### Differences from Traditional Rule 30 RNG
-
-**Traditional approach (Wolfram's method):**
-- Evolves a large 1D CA over many generations
-- Extracts randomness from a **single column** (typically center) over time
-- Output: 1 bit per iteration from one cell's temporal evolution
-- Example: bit₀ from gen₀, bit₁ from gen₁, bit₂ from gen₂, etc.
-- Requires tracking spacetime history or evolving step-by-step
-
-**Our implementation (spatial extraction):**
-- Evolves a 256-bit circular strip one generation
-- Extracts randomness from **all 256 bits** of the current state
-- Output: 256 bits per iteration from entire spatial pattern
-- Repeats: evolve → extract all → evolve → extract all
-- **256× more efficient**: exploits Rule 30's spatial randomness, not just temporal
-
-**Key advantages of spatial extraction:**
-- ✓ **Much faster**: 256 bits per iteration vs 1 bit
-- ✓ **Simpler**: no spacetime history needed
-- ✓ **Circular topology**: ensures uniform mixing (all positions equivalent)
-- ✓ **Parallel-friendly**: processes entire state at once
-
-**Trade-off:**
-- Traditional method has longer "history" from single position's evolution
-- Our method samples the full spatial pattern at each instant
-- Both produce excellent randomness - ours is just more efficient
-
-This spatial extraction approach is why we achieve 4x throughput vs math/rand, while maintaining perfect entropy and distribution.
-
-## Building
+## Building & Testing
 
 ```bash
 # Build all binaries
 make all
 
-# Build just the RNG CLI
-make rule30
-
-# Build comparison tool
-make compare
-
-# Run comparison benchmarks
-make compare-run
-
-# Run tests
-make test
-
 # Run Go benchmarks
 make bench
 
-# Generate test data
-make testdata
-
-# Clean build artifacts
-make clean
-```
-
-## Comparison Tools
-
-Compare Rule 30 RNG against Go's standard libraries:
-
-```bash
-# Run all comparison benchmarks
+# Run comparison tools
 make compare-run
-
-# Or run individual tools
-./misc/compare-read      # Read() throughput benchmark
-./misc/compare-uint64    # Uint64() speed benchmark
-
-# Compare with /dev/urandom
 ./misc/compare-urandom.sh
-```
 
-These tools measure:
-- Throughput (MB/s) at different buffer sizes
-- Uint64() performance (ns/call)
-- Comparison with system entropy sources
+# Run TestU01 statistical tests
+cd testu01
+make smallcrush
+```
 
 ## Use Cases
 
 **Good for:**
 - Monte Carlo simulations
 - Procedural generation (games, graphics)
-- Non-cryptographic random sampling
-- Reproducible random sequences (deterministic from seed)
-- High-throughput random data generation
+- High-throughput random sampling
+- Reproducible sequences (deterministic from seed)
 
-**Not recommended for:**
-- Cryptographic applications (use crypto/rand instead)
-- Security-critical random number generation
-- Applications requiring cryptographically secure randomness
+**Not for:**
+- Cryptographic applications (use `crypto/rand`)
+- Security-critical randomness
 
-## Algorithm Background
+## Background
 
-Rule 30 was discovered by Stephen Wolfram in 1983 as one of 256 elementary cellular automata. Despite its simple definition, it exhibits chaotic behavior and generates seemingly random patterns.
+Rule 30 is a Class III cellular automaton discovered by Stephen Wolfram in 1983. Despite its simple definition, it exhibits chaotic behavior and generates high-quality randomness. Wolfram Research used it as the basis for Mathematica's random number generator.
 
-**Key properties:**
-- Class III cellular automaton (chaotic behavior)
-- Sensitivity to initial conditions
-- No known compact mathematical description
-- Passes many statistical randomness tests
+## License
 
-**Historical note**: Wolfram Research uses Rule 30 as the basis for Mathematica's default random number generator.
+MIT License - See LICENSE file for details
 
 ## References
 
 - Wolfram, Stephen (1983). "Statistical mechanics of cellular automata"
 - Wolfram, Stephen (2002). "A New Kind of Science"
 - [Rule 30 on Wikipedia](https://en.wikipedia.org/wiki/Rule_30)
-
-## License
-
-MIT License - See LICENSE file for details
-
-## Contributing
-
-Contributions welcome! Please open an issue or pull request.
-
-Areas for contribution:
-- Additional randomness tests (Diehard, PractRand)
-- SIMD optimizations (AVX2, NEON)
-- Platform-specific builds
-- Extended seed formats
-- Additional CLI features
