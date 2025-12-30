@@ -21,7 +21,7 @@ RULE30_SOURCES = rule30-main.go rule30-cli.go
 COMPARE_READ_SOURCES = compare-read.go
 COMPARE_UINT64_SOURCES = compare-uint64.go
 
-.PHONY: all rule30 compare compare-read compare-uint64 clean fmt help compare-run test-entropy smoke deps
+.PHONY: all rule30 compare compare-read compare-uint64 clean fmt help compare-run test-entropy smoke deps bench
 
 # Default target
 all: rule30 compare
@@ -60,6 +60,10 @@ compare-run: compare
 	@echo ""
 	@echo "Running Uint64() benchmark..."
 	./$(COMPARE_UINT64_BIN)
+
+# Run go test benchmarks with table output
+bench:
+	@./bench-table.sh
 
 # Format code
 fmt:
@@ -112,6 +116,7 @@ help:
 	@echo "  compare-read   Build compare-read tool (MB/s benchmark)"
 	@echo "  compare-uint64 Build compare-uint64 tool (ns/call benchmark)"
 	@echo "  compare-run    Run both comparison benchmarks"
+	@echo "  bench          Run go test benchmarks (table format)"
 	@echo "  fmt            Format code with gofmt"
 	@echo "  clean          Remove build artifacts"
 	@echo "  deps           Download and tidy dependencies"

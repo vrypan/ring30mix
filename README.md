@@ -4,7 +4,7 @@ A high-performance pseudo-random number generator based on Rule 30 cellular auto
 
 ## Overview
 
-Rule 30 RND generates pseudo-random numbers using a 1D cellular automaton (Rule 30) on a circular 256-bit strip. Rule 30 is known for producing high-quality randomness and is famously used in Mathematica's default random number generator.
+Rule 30 RND generates pseudo-random numbers using a 1D cellular automaton (Rule 30) on a circular 256-bit strip. Rule 30 is known for producing high-quality randomness and was famously used in Mathematica's default random number generator.
 
 **Key Features:**
 - **High performance**: Competitive with math/rand for Uint64() (~1.0×), 3.3× faster for byte streams
@@ -15,38 +15,43 @@ Rule 30 RND generates pseudo-random numbers using a 1D cellular automaton (Rule 
 
 ## Performance
 
-Rule 30 RND offers different performance characteristics depending on use case:
+(Run `make bench` to reproduce on your hw.)
 
-### Uint64() Benchmark - Fair RNG Algorithm Comparison
+|Algorithm       |     Read32KB |      Read1KB |       Uint64|
+|----------------|--------------|--------------|-------------|
+|athRand        |  21468.00 ns |    651.10 ns |      1.78 ns|
+|MathRandV2      |  12693.00 ns |    400.00 ns |      3.06 ns|
+|Rule30          |   3922.00 ns |    127.00 ns |      1.28 ns|
+|CryptoRand      |   6895.00 ns |    371.80 ns |     53.04 ns|
 
-This benchmark compares the underlying RNG algorithms using their primitive `Uint64()` operation:
+Relative speed (vs MathRand baseline = 1.00x):
 
-| RNG         | Throughput | vs Rule30 | Entropy | Chi-Square |
-|-------------|------------|-----------|---------|------------|
-| math/rand   | 1,330 MB/s | 1.05×     | 8.0000  | 291.6      |
-| Rule30RND   | 1,270 MB/s | 1.0×      | 8.0000  | 253.0      |
-| crypto/rand |   121 MB/s | 0.10×     | 8.0000  | 245.2      |
+|Algorithm       |    Read32KB |     Read1KB |      Uint64|
+|----------------|-------------|-------------|------------|
+|MathRand        |       1.00x |       1.00x |       1.00x|
+|MathRandV2      |       1.69x |       1.63x |       0.58x|
+|**Rule30**      |       **5.47x** |       **5.13x** |       **1.39x**|
+|CryptoRand      |       3.11x |       1.75x |       0.03x|
 
-*Rule30 and math/rand have comparable Uint64() performance*
+## Randomness Tests
 
-### Read() Benchmark - Bulk Byte Stream Generation
+Use the `ent` tool to analyze randomness:
 
-This benchmark measures bulk byte stream performance (useful for file generation, simulations):
+```bash
+# Generate test data
+./rule30-rng --bytes=10485760 > test.bin
 
-| RNG         | Throughput | vs Rule30 | Entropy | Chi-Square |
-|-------------|------------|-----------|---------|------------|
-| Rule30RND   | 4,081 MB/s | 1.0×      | 8.0000  | 253.9      |
-| crypto/rand | 3,539 MB/s | 0.87×     | 8.0000  | 273.3      |
-| math/rand   | 1,241 MB/s | 0.30×     | 8.0000  | 272.3      |
+# Analyze with ent
+ent test.bin
+```
 
-*Rule30 is optimized for bulk generation (32 bytes per iteration)*
-
-**Key Takeaways:**
-- **For `Uint64()` calls**: Rule30 and math/rand have comparable performance (~1.05× difference)
-- **For byte streams**: Rule30 is fastest due to bulk generation design (3.3× faster)
-- **All RNGs**: Perfect entropy (8.0) and excellent distribution (chi-square ~255)
-
-Run `./rule30-compare -mode=uint64` or `./rule30-compare -mode=read` to see detailed benchmarks.
+| Test | Result | Expected | Status |
+|------|--------|----------|--------|
+| **Shannon Entropy** | 7.999982 bits/byte | 8.0000 | ✓ Perfect (99.9998%) |
+| **Chi-Square** | 253.9 - 264.55 | ~255 (200-310) | ✓ Excellent |
+| **Arithmetic Mean** | 127.4987 | 127.5 | ✓ Perfect |
+| **Monte Carlo π** | 3.140031 | 3.141593 | ✓ 0.05% error |
+| **Serial Correlation** | 0.000171 | 0.0000 | ✓ Uncorrelated |
 
 ## Installation
 
@@ -147,41 +152,6 @@ func main() {
 - `ExpFloat64()` - exponentially distributed float64 (rate=1)
 - `Read([]byte)` - fills byte slice with random data (io.Reader)
 
-### Testing Randomness
-
-Use the `ent` tool to analyze randomness:
-
-```bash
-# Generate test data
-./rule30-rng --bytes=10485760 > test.bin
-
-# Analyze with ent
-ent test.bin
-```
-
-**Actual test results (10MB sample):**
-
-```
-Entropy = 7.999982 bits per byte.
-
-Optimum compression would reduce the size
-of this 10485760 byte file by 0 percent.
-
-Chi square distribution for 10485760 samples is 264.55, and randomly
-would exceed this value 32.73 percent of the times.
-
-Arithmetic mean value of data bytes is 127.4987 (127.5 = random).
-Monte Carlo value for Pi is 3.140031105 (error 0.05 percent).
-Serial correlation coefficient is 0.000171 (totally uncorrelated = 0.0).
-```
-
-**Analysis:**
-- ✓ **Entropy**: 7.999982/8.0 (99.9998% of maximum) - Perfect
-- ✓ **Chi-square**: 264.55 (expected ~255, range 200-310) - Excellent
-- ✓ **Mean**: 127.4987 (expected 127.5) - Perfect uniformity
-- ✓ **Monte Carlo π**: 3.140031 (error 0.05%) - Excellent
-- ✓ **Serial correlation**: 0.000171 (expected 0.0) - No detectable pattern
-
 ## How It Works
 
 ### Rule 30 Cellular Automaton
@@ -240,51 +210,6 @@ new_bit = left XOR (center OR right)
 - Both produce excellent randomness - ours is just more efficient
 
 This spatial extraction approach is why we achieve 4x throughput vs math/rand, while maintaining perfect entropy and distribution.
-
-## Randomness Quality
-
-Rule 30 RNG has been extensively tested and shows exceptional randomness quality.
-
-### Test Results Summary
-
-| Test | Result | Expected | Status |
-|------|--------|----------|--------|
-| **Shannon Entropy** | 7.999982 bits/byte | 8.0000 | ✓ Perfect (99.9998%) |
-| **Chi-Square** | 253.9 - 264.55 | ~255 (200-310) | ✓ Excellent |
-| **Arithmetic Mean** | 127.4987 | 127.5 | ✓ Perfect |
-| **Monte Carlo π** | 3.140031 | 3.141593 | ✓ 0.05% error |
-| **Serial Correlation** | 0.000171 | 0.0000 | ✓ Uncorrelated |
-
-### Shannon Entropy
-
-Measures unpredictability of the data:
-
-```
-H = -Σ(p(i) × log₂(p(i)))
-```
-
-- **Maximum**: 8.0000 bits/byte (perfect randomness)
-- **Rule 30 RNG**: 7.999982 bits/byte (99.9998% of maximum) ✓
-
-### Chi-Square Test
-
-Measures uniformity of byte distribution:
-
-```
-χ² = Σ((observed - expected)² / expected)
-```
-
-- **Expected value**: ~255 (for 256 byte values, df=255)
-- **Acceptable range**: 200-310 (95% confidence interval)
-- **Rule 30 RNG**: 253.9 average (comparison tool), 264.55 (ent 10MB test) ✓
-
-### Additional Quality Metrics
-
-From `ent` statistical analysis tool (10MB sample):
-- **Arithmetic mean**: 127.4987 (expected 127.5) - Perfect uniformity
-- **Monte Carlo π estimate**: 3.140031105 (0.05% error) - Excellent
-- **Serial correlation**: 0.000171 (expected 0.0) - No byte-to-byte patterns
-- **Compression**: 0% - Data is incompressible (hallmark of randomness)
 
 ## Building
 
