@@ -291,18 +291,26 @@ make testdata
 make clean
 ```
 
-## Comparison Tool
+## Comparison Tools
 
 Compare Rule 30 RNG against Go's standard libraries:
 
 ```bash
-./rule30-compare
+# Run all comparison benchmarks
+make compare-run
+
+# Or run individual tools
+./misc/compare-read      # Read() throughput benchmark
+./misc/compare-uint64    # Uint64() speed benchmark
+
+# Compare with /dev/urandom
+./misc/compare-urandom.sh
 ```
 
-This runs comprehensive benchmarks measuring:
+These tools measure:
 - Throughput (MB/s) at different buffer sizes
-- Shannon entropy (bits per byte)
-- Chi-square distribution test
+- Uint64() performance (ns/call)
+- Comparison with system entropy sources
 
 ## Use Cases
 
