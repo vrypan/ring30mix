@@ -16,7 +16,7 @@ type RNG struct {
 // New creates a new Rule 30 RNG from a seed
 func New(seed uint64) *RNG {
 	rng := &RNG{
-		pos: 4, // Force Step() on first Uint64() call
+		pos: 4, // Force step() on first Uint64() call
 	}
 
 	// Initialize state from seed
