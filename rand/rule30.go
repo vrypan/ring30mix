@@ -29,10 +29,10 @@ func New(seed uint64) *RNG {
 	return rng
 }
 
-// Step applies Rule 30 to all 256 bits in parallel (64-bit word-wise)
+// step applies Rule 30 to all 256 bits in parallel (64-bit word-wise)
 // Rule 30: new_bit = left XOR (center OR right)
 // Optimized for 64-bit architecture: processes 64 bits at once, fully unrolled
-func (r *RNG) Step() {
+func (r *RNG) step() {
 	// Fully unrolled loop for maximum performance
 	// Cache state words locally (cheaper than repeated array indexing)
 	s0 := r.state[0]
@@ -77,7 +77,7 @@ func (r *RNG) Read(buf []byte) (n int, err error) {
 	// Fill full uint64 chunks directly into the destination buffer
 	for limit-i >= 8 {
 		if r.pos >= 4 {
-			r.Step()
+			r.step()
 			r.pos = 0
 		}
 		binary.LittleEndian.PutUint64(buf[i:], r.state[r.pos])
@@ -88,7 +88,7 @@ func (r *RNG) Read(buf []byte) (n int, err error) {
 	// Handle the remaining tail bytes, if any, without creating a temporary buffer
 	if rem := limit - i; rem > 0 {
 		if r.pos >= 4 {
-			r.Step()
+			r.step()
 			r.pos = 0
 		}
 		val := r.state[r.pos]
@@ -117,7 +117,7 @@ func (r *RNG) Uint32() uint32 {
 func (r *RNG) Uint64() uint64 {
 	// Generate new state if we've exhausted all 4 uint64 values
 	if r.pos >= 4 {
-		r.Step()
+		r.step()
 		r.pos = 0
 	}
 
