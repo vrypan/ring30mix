@@ -114,8 +114,8 @@ func runBenchmarkRule30(seed uint64) {
 	fmt.Println("Rule 30 RNG Benchmark")
 	fmt.Printf("Seed: 0x%016X\n", seed)
 	fmt.Println()
-	fmt.Println("Size\t\tTime\t\tThroughput")
-	fmt.Println("----\t\t----\t\t----------")
+	fmt.Printf("%6s    %8s    %12s\n", "Size", "Time", "Throughput")
+	fmt.Printf("%6s    %8s    %12s\n", "----", "----", "----------")
 
 	for _, size := range sizes {
 		buf := make([]byte, size)
@@ -132,7 +132,9 @@ func runBenchmarkRule30(seed uint64) {
 		throughput := float64(n) / elapsed.Seconds() / 1024 / 1024 // MB/s
 
 		sizeStr := formatSizeRule30(size)
-		fmt.Printf("%s\t\t%v\t%.2f MB/s\n", sizeStr, elapsed.Round(time.Millisecond), throughput)
+		timeStr := formatDurationRule30(elapsed)
+		throughputStr := formatThroughputRule30(throughput)
+		fmt.Printf("%6s    %8s    %12s\n", sizeStr, timeStr, throughputStr)
 	}
 }
 
@@ -144,4 +146,21 @@ func formatSizeRule30(bytes int) string {
 		return fmt.Sprintf("%d KB", bytes/1024)
 	}
 	return fmt.Sprintf("%d B", bytes)
+}
+
+// formatDurationRule30 formats duration in appropriate units with 8-char padding
+func formatDurationRule30(d time.Duration) string {
+	if d < time.Microsecond {
+		return fmt.Sprintf("%6d ns", d.Nanoseconds())
+	} else if d < time.Millisecond {
+		return fmt.Sprintf("%6.2f µs", float64(d.Nanoseconds())/1000.0)
+	} else if d < time.Second {
+		return fmt.Sprintf("%6.2f ms", float64(d.Nanoseconds())/1000000.0)
+	}
+	return fmt.Sprintf("%6.2f s", d.Seconds())
+}
+
+// formatThroughputRule30 formats throughput in MB/s with padding
+func formatThroughputRule30(mbps float64) string {
+	return fmt.Sprintf("%9.2f MB/s", mbps)
 }
