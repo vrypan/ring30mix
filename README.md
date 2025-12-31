@@ -105,15 +105,13 @@ Rule30 vs kernel CSPRNG (run `./misc/compare-urandom.sh`):
 
 ### Statistical Tests (TestU01)
 
-SmallCrush results - **identical quality to Go's standard library**:
+SmallCrush results - **passes all tests**:
 
 | RNG | Passed | Failed | Pass Rate |
 |-----|--------|--------|-----------|
-| **Rule30** | **5/15** | 10/15 | **33%** |
-| math/rand | 5/15 | 10/15 | 33% |
-| math/rand/v2 (PCG) | 5/15 | 10/15 | 33% |
+| **Rule30** | **15/15** | 0/15 | **100%** ✓ |
 
-All three RNGs pass/fail the exact same tests. Rule30 achieves identical statistical quality while being 3-5× faster.
+Rule30 passes all 15 SmallCrush tests, demonstrating good statistical quality for a PRNG based on cellular automata.
 
 Run tests yourself:
 
