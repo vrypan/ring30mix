@@ -82,10 +82,10 @@ Benchmarks on Apple M4, verified 2026-01-01 (run `make bench` to reproduce):
 **Perfect scores on complete TestU01 test suite** - exceptional statistical quality verified through rigorous testing:
 
 | Test Battery | Tests | Rule30 | Pass Rate | Status |
-|--------------|-------|--------|-----------|------|--------|
+|--------------|-------|--------|-----------|------|
 | **SmallCrush** | 15 | **15/15** ✓ | **100%** | ✅ Verified 2026-01-01 |
 | **Crush** | 144 | **144/144** ✓ | **100%**  | ✅ Verified 2026-01-01 |
-| **BigCrush** | 160 | **160/160** ✓ | **100%** |  | ✅ Verified 2026-01-01 |
+| **BigCrush** | 160 | **160/160** ✓ | **100%** | ✅ Verified 2026-01-01 |
 
 **Historic Achievement:** The implementation demonstrates exceptional quality across all test categories: serial correlation, birthday spacing, collision, permutation, matrix rank, spectral, string, compression, random walk, Fourier analysis, linear complexity, and autocorrelation tests.
 
@@ -94,7 +94,7 @@ Benchmarks on Apple M4, verified 2026-01-01 (run `make bench` to reproduce):
 BigCrush results comparing Rule 30 with Go's stdlib RNGs (verified 2026-01-01):
 
 | Generator | BigCrush Score | Failures | Performance vs math/rand |
-|-----------|---------------|----------|---------|--------------------------|
+|-----------|---------------|----------|--------------------------|
 | **Rule 30** | **160/160** ✓ | **0** |  **3.86× faster** |
 | **math/rand/v2** | **160/160** ✓ | 0 | 1.59× faster |
 | **math/rand** | 159/160 | 1* | 1.00× (baseline) |
@@ -116,6 +116,8 @@ make bigcrush     # Comprehensive test (160 tests, 1 hour)
 
 **Algorithm**: 
 - Radius-2 cellular automaton based on Rule 30 on a circular 256-bit strip.
+
+  `new_bit = (left2 XOR left1) XOR ((center OR right1) OR right2)`
 - Hybrid rotation + multiply mixing applied on output
 
 ```
