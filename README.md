@@ -1,6 +1,8 @@
 # R30R2
 
-High-performance pseudo-random number generator based on Rule 30 cellular automaton. **Up to 3.86× faster** than Go's math/rand for bulk operations, with **equivalent statistical quality to math/rand/v2** - both pass all 160 BigCrush tests perfectly.
+High-performance pseudo-random number generator based on Rule 30 (radius-2) cellular automaton. 
+- **2× faster** than Go's math/rand/v2 
+- **160/160 BigCrush** tests pass perfectly.
 
 ## Quick Start
 
@@ -63,19 +65,19 @@ Benchmarks on Apple M4, verified 2026-01-01 (run `make bench` to reproduce):
 
 |Algorithm       |  Read() 32KB |   Read() 1KB |     Uint64()|
 |----------------|--------------|--------------|-------------|
-|MathRand        |  21316.00 ns |    674.30 ns |      1.81 ns|
-|MathRandV2      |  13369.00 ns |    423.50 ns |      3.22 ns|
-|**R30R2**      |   **5516.00 ns** |    **183.90 ns** |      **1.75 ns**|
-|CryptoRand      |   7009.00 ns |    367.90 ns |     56.29 ns|
+|math/rand       |  21316.00 ns |    674.30 ns |      1.81 ns|
+|math/rand/v2    |  13369.00 ns |    423.50 ns |      3.22 ns|
+|**R30R2**       |   **5516.00 ns** |    **183.90 ns** |      **1.75 ns**|
+|crypto/rand     |   7009.00 ns |    367.90 ns |     56.29 ns|
 
 **Relative to math/rand:**
 
 |Algorithm       | Read() 32KB |  Read() 1KB |    Uint64()|
 |----------------|-------------|-------------|------------|
-|MathRand        |       1.00x |       1.00x |       1.00x|
-|MathRandV2      |       1.59x |       1.59x |       0.56x|
-|**R30R2**      |    *3.86x** |   **3.67x** |   **1.03x**|
-|CryptoRand      |       3.04x |       1.83x |       0.03x|
+|math/rand       |       1.00x |       1.00x |       1.00x|
+|math/rand/v2    |       1.59x |       1.59x |       0.56x|
+|**R30R2**       |    **3.86x** |   **3.67x** |   **1.03x**|
+|crypto/rand     |       3.04x |       1.83x |       0.03x|
 
 ## Randomness Quality
 
