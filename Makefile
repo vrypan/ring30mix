@@ -17,50 +17,42 @@ GOMOD = $(GOCMD) mod
 LDFLAGS = -s -w
 BUILD_FLAGS = -ldflags "$(LDFLAGS)"
 
-# Source files
-RULE30_SOURCES = rule30-main.go rule30-cli.go
-COMPARE_READ_SOURCES = misc/compare-read.go
-COMPARE_UINT64_SOURCES = misc/compare-uint64.go
-VISUALIZE_SOURCES = misc/visualize-rule30.go
+# Source files for dependency tracking
+RULE30_SOURCES = rule30-main.go rule30-cli.go rand/rule30.go
+COMPARE_READ_SOURCES = misc/compare-read.go rand/rule30.go
+COMPARE_UINT64_SOURCES = misc/compare-uint64.go rand/rule30.go
+VISUALIZE_SOURCES = misc/visualize-rule30.go rand/rule30.go
 
-.PHONY: all rule30 compare compare-read compare-uint64 visualize clean fmt help compare-run test-entropy smoke deps bench
+.PHONY: all compare clean fmt help compare-run test-entropy smoke deps bench
 
 # Default target
-all: rule30 compare
+all: $(RULE30_BIN) compare
 
 # Build the Rule 30 CLI tool
-rule30: $(RULE30_BIN)
-
 $(RULE30_BIN): $(RULE30_SOURCES)
 	@echo "Building $(RULE30_BIN)..."
-	$(GOBUILD) $(BUILD_FLAGS) -o $(RULE30_BIN) $(RULE30_SOURCES)
+	$(GOBUILD) $(BUILD_FLAGS) -o $(RULE30_BIN) rule30-main.go rule30-cli.go
 	@echo "✓ Built $(RULE30_BIN)"
 
 # Build both comparison tools
-compare: compare-read compare-uint64
+compare: $(COMPARE_READ_BIN) $(COMPARE_UINT64_BIN)
 
 # Build the Read() comparison tool
-compare-read: $(COMPARE_READ_BIN)
-
 $(COMPARE_READ_BIN): $(COMPARE_READ_SOURCES)
 	@echo "Building $(COMPARE_READ_BIN)..."
-	$(GOBUILD) $(BUILD_FLAGS) -o $(COMPARE_READ_BIN) $(COMPARE_READ_SOURCES)
+	$(GOBUILD) $(BUILD_FLAGS) -o $(COMPARE_READ_BIN) misc/compare-read.go
 	@echo "✓ Built $(COMPARE_READ_BIN)"
 
 # Build the Uint64() comparison tool
-compare-uint64: $(COMPARE_UINT64_BIN)
-
 $(COMPARE_UINT64_BIN): $(COMPARE_UINT64_SOURCES)
 	@echo "Building $(COMPARE_UINT64_BIN)..."
-	$(GOBUILD) $(BUILD_FLAGS) -o $(COMPARE_UINT64_BIN) $(COMPARE_UINT64_SOURCES)
+	$(GOBUILD) $(BUILD_FLAGS) -o $(COMPARE_UINT64_BIN) misc/compare-uint64.go
 	@echo "✓ Built $(COMPARE_UINT64_BIN)"
 
 # Build the visualization tool
-visualize: $(VISUALIZE_BIN)
-
 $(VISUALIZE_BIN): $(VISUALIZE_SOURCES)
 	@echo "Building $(VISUALIZE_BIN)..."
-	$(GOBUILD) $(BUILD_FLAGS) -o $(VISUALIZE_BIN) $(VISUALIZE_SOURCES)
+	$(GOBUILD) $(BUILD_FLAGS) -o $(VISUALIZE_BIN) misc/visualize-rule30.go
 	@echo "✓ Built $(VISUALIZE_BIN)"
 
 # Run comparison benchmarks

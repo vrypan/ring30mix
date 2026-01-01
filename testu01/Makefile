@@ -28,22 +28,26 @@ mathrandv2-gen: mathrandv2-gen.go
 	go build -o mathrandv2-gen mathrandv2-gen.go
 
 # Run SmallCrush (quick test)
-smallcrush: test-smallcrush
+smallcrush: test-smallcrush ../rule30
 	@echo "Running SmallCrush test (approx 1-2 minutes)..."
 	@echo "Generating unlimited random data and piping to TestU01..."
 	@cd .. && ./rule30 --bytes=0 2>/dev/null | ./testu01/test-smallcrush
 
 # Run Crush (medium test)
-crush: test-crush
+crush: test-crush ../rule30
 	@echo "Running Crush test (approx 1 hour)..."
 	@echo "Generating unlimited random data and piping to TestU01..."
 	@cd .. && ./rule30 --bytes=0 2>/dev/null | ./testu01/test-crush
 
 # Run BigCrush (comprehensive test)
-bigcrush: test-bigcrush
+bigcrush: test-bigcrush ../rule30
 	@echo "Running BigCrush test (approx 8 hours)..."
 	@echo "Generating unlimited random data and piping to TestU01..."
 	@cd .. && ./rule30 --bytes=0 2>/dev/null | ./testu01/test-bigcrush
+
+# Build rule30 binary if needed
+../rule30:
+	@cd .. && $(MAKE) $(notdir $@)
 
 # Run SmallCrush with math/rand (comparison)
 mathrand-smallcrush: test-smallcrush mathrand-gen
