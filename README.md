@@ -119,10 +119,6 @@ make bigcrush     # Comprehensive test (160 tests, 1 hour)
   `new_bit = (left2 XOR left1) XOR ((center OR right1) OR right2)`
 - Hybrid rotation + multiply mixing applied on output
 
-```
-Evolution rule: new_bit = (left2 XOR left1) XOR ((center OR right1) OR right2)
-```
-
 **Implementation**:
 - 256-bit state as 4 × 64-bit words
 - Radius-2 neighborhood: each bit depends on 5 neighboring cells
