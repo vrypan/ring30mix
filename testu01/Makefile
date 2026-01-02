@@ -31,19 +31,52 @@ mathrandv2-gen: mathrandv2-gen.go
 smallcrush: test-smallcrush ../r30r2
 	@echo "Running SmallCrush test (approx 1-2 minutes)..."
 	@echo "Generating unlimited random data and piping to TestU01..."
-	@cd .. && ./r30r2 --bytes=0 2>/dev/null | ./testu01/test-smallcrush
+	@LOGBASE=testu01/smallcrush; \
+	if [ ! -f $$LOGBASE.log ]; then \
+		LOGFILE=$$LOGBASE.log; \
+	else \
+		N=2; \
+		while [ -f $$LOGBASE-$$N.log ]; do \
+			N=$$((N+1)); \
+		done; \
+		LOGFILE=$$LOGBASE-$$N.log; \
+	fi; \
+	echo "Output will be saved to $$LOGFILE"; \
+	cd .. && ./r30r2 --bytes=0 2>/dev/null | ./testu01/test-smallcrush | tee $$LOGFILE
 
 # Run Crush (medium test)
 crush: test-crush ../r30r2
 	@echo "Running Crush test (approx 1 hour)..."
 	@echo "Generating unlimited random data and piping to TestU01..."
-	@cd .. && ./r30r2 --bytes=0 2>/dev/null | ./testu01/test-crush
+	@LOGBASE=testu01/crush; \
+	if [ ! -f $$LOGBASE.log ]; then \
+		LOGFILE=$$LOGBASE.log; \
+	else \
+		N=2; \
+		while [ -f $$LOGBASE-$$N.log ]; do \
+			N=$$((N+1)); \
+		done; \
+		LOGFILE=$$LOGBASE-$$N.log; \
+	fi; \
+	echo "Output will be saved to $$LOGFILE"; \
+	cd .. && ./r30r2 --bytes=0 2>/dev/null | ./testu01/test-crush | tee $$LOGFILE
 
 # Run BigCrush (comprehensive test)
 bigcrush: test-bigcrush ../r30r2
 	@echo "Running BigCrush test (approx 8 hours)..."
 	@echo "Generating unlimited random data and piping to TestU01..."
-	@cd .. && ./r30r2 --bytes=0 2>/dev/null | ./testu01/test-bigcrush
+	@LOGBASE=testu01/bigcrush; \
+	if [ ! -f $$LOGBASE.log ]; then \
+		LOGFILE=$$LOGBASE.log; \
+	else \
+		N=2; \
+		while [ -f $$LOGBASE-$$N.log ]; do \
+			N=$$((N+1)); \
+		done; \
+		LOGFILE=$$LOGBASE-$$N.log; \
+	fi; \
+	echo "Output will be saved to $$LOGFILE"; \
+	cd .. && ./r30r2 --bytes=0 2>/dev/null | ./testu01/test-bigcrush | tee $$LOGFILE
 
 # Build r30r2 binary if needed
 ../r30r2:
@@ -53,37 +86,103 @@ bigcrush: test-bigcrush ../r30r2
 mathrand-smallcrush: test-smallcrush mathrand-gen
 	@echo "Running SmallCrush test with math/rand (approx 1-2 minutes)..."
 	@echo "Generating unlimited random data from math/rand..."
-	@./mathrand-gen --bytes=0 2>/dev/null | ./test-smallcrush
+	@LOGBASE=mathrand-smallcrush; \
+	if [ ! -f $$LOGBASE.log ]; then \
+		LOGFILE=$$LOGBASE.log; \
+	else \
+		N=2; \
+		while [ -f $$LOGBASE-$$N.log ]; do \
+			N=$$((N+1)); \
+		done; \
+		LOGFILE=$$LOGBASE-$$N.log; \
+	fi; \
+	echo "Output will be saved to $$LOGFILE"; \
+	./mathrand-gen --bytes=0 2>/dev/null | ./test-smallcrush | tee $$LOGFILE
 
 # Run Crush with math/rand
 mathrand-crush: test-crush mathrand-gen
 	@echo "Running Crush test with math/rand (approx 1 hour)..."
 	@echo "Generating unlimited random data from math/rand..."
-	@./mathrand-gen --bytes=0 2>/dev/null | ./test-crush
+	@LOGBASE=mathrand-crush; \
+	if [ ! -f $$LOGBASE.log ]; then \
+		LOGFILE=$$LOGBASE.log; \
+	else \
+		N=2; \
+		while [ -f $$LOGBASE-$$N.log ]; do \
+			N=$$((N+1)); \
+		done; \
+		LOGFILE=$$LOGBASE-$$N.log; \
+	fi; \
+	echo "Output will be saved to $$LOGFILE"; \
+	./mathrand-gen --bytes=0 2>/dev/null | ./test-crush | tee $$LOGFILE
 
 # Run BigCrush with math/rand
 mathrand-bigcrush: test-bigcrush mathrand-gen
 	@echo "Running BigCrush test with math/rand (approx 8 hours)..."
 	@echo "Generating unlimited random data from math/rand..."
-	@./mathrand-gen --bytes=0 2>/dev/null | ./test-bigcrush
+	@LOGBASE=mathrand-bigcrush; \
+	if [ ! -f $$LOGBASE.log ]; then \
+		LOGFILE=$$LOGBASE.log; \
+	else \
+		N=2; \
+		while [ -f $$LOGBASE-$$N.log ]; do \
+			N=$$((N+1)); \
+		done; \
+		LOGFILE=$$LOGBASE-$$N.log; \
+	fi; \
+	echo "Output will be saved to $$LOGFILE"; \
+	./mathrand-gen --bytes=0 2>/dev/null | ./test-bigcrush | tee $$LOGFILE
 
 # Run SmallCrush with math/rand/v2 (comparison)
 mathrandv2-smallcrush: test-smallcrush mathrandv2-gen
 	@echo "Running SmallCrush test with math/rand/v2 (approx 1-2 minutes)..."
 	@echo "Generating unlimited random data from math/rand/v2..."
-	@./mathrandv2-gen --bytes=0 2>/dev/null | ./test-smallcrush
+	@LOGBASE=mathrandv2-smallcrush; \
+	if [ ! -f $$LOGBASE.log ]; then \
+		LOGFILE=$$LOGBASE.log; \
+	else \
+		N=2; \
+		while [ -f $$LOGBASE-$$N.log ]; do \
+			N=$$((N+1)); \
+		done; \
+		LOGFILE=$$LOGBASE-$$N.log; \
+	fi; \
+	echo "Output will be saved to $$LOGFILE"; \
+	./mathrandv2-gen --bytes=0 2>/dev/null | ./test-smallcrush | tee $$LOGFILE
 
 # Run Crush with math/rand/v2
 mathrandv2-crush: test-crush mathrandv2-gen
 	@echo "Running Crush test with math/rand/v2 (approx 1 hour)..."
 	@echo "Generating unlimited random data from math/rand/v2..."
-	@./mathrandv2-gen --bytes=0 2>/dev/null | ./test-crush
+	@LOGBASE=mathrandv2-crush; \
+	if [ ! -f $$LOGBASE.log ]; then \
+		LOGFILE=$$LOGBASE.log; \
+	else \
+		N=2; \
+		while [ -f $$LOGBASE-$$N.log ]; do \
+			N=$$((N+1)); \
+		done; \
+		LOGFILE=$$LOGBASE-$$N.log; \
+	fi; \
+	echo "Output will be saved to $$LOGFILE"; \
+	./mathrandv2-gen --bytes=0 2>/dev/null | ./test-crush | tee $$LOGFILE
 
 # Run BigCrush with math/rand/v2
 mathrandv2-bigcrush: test-bigcrush mathrandv2-gen
 	@echo "Running BigCrush test with math/rand/v2 (approx 8 hours)..."
 	@echo "Generating unlimited random data from math/rand/v2..."
-	@./mathrandv2-gen --bytes=0 2>/dev/null | ./test-bigcrush
+	@LOGBASE=mathrandv2-bigcrush; \
+	if [ ! -f $$LOGBASE.log ]; then \
+		LOGFILE=$$LOGBASE.log; \
+	else \
+		N=2; \
+		while [ -f $$LOGBASE-$$N.log ]; do \
+			N=$$((N+1)); \
+		done; \
+		LOGFILE=$$LOGBASE-$$N.log; \
+	fi; \
+	echo "Output will be saved to $$LOGFILE"; \
+	./mathrandv2-gen --bytes=0 2>/dev/null | ./test-bigcrush | tee $$LOGFILE
 
 clean:
 	rm -f $(TARGETS)

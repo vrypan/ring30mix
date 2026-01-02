@@ -10,6 +10,7 @@ compare-uint64
 *.bin
 *.dat
 *.test
+*.log
 testdata.bin
 bench.txt
 results.txt
