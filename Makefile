@@ -4,7 +4,6 @@
 R30R2_BIN = r30r2
 COMPARE_READ_BIN = misc/compare-read
 COMPARE_UINT64_BIN = misc/compare-uint64
-VISUALIZE_BIN = misc/visualize-r30r2
 
 # Go parameters
 GOCMD = go
@@ -18,12 +17,11 @@ LDFLAGS = -s -w
 BUILD_FLAGS = -ldflags "$(LDFLAGS)"
 
 # Source files for dependency tracking
-R30R2_SOURCES = r30r2-main.go r30r2-cli.go rand/r30r2.go
+R30R2_SOURCES = main.go cmd/root.go cmd/raw.go cmd/ascii.go cmd/version.go rand/r30r2.go
 COMPARE_READ_SOURCES = misc/compare-read.go rand/r30r2.go
 COMPARE_UINT64_SOURCES = misc/compare-uint64.go rand/r30r2.go
-VISUALIZE_SOURCES = misc/visualize-r30r2.go rand/r30r2.go
 
-.PHONY: all compare visualize clean fmt help compare-run test-entropy smoke deps bench
+.PHONY: all compare clean fmt help compare-run test-entropy smoke deps bench
 
 # Default target
 all: $(R30R2_BIN) compare
@@ -31,7 +29,7 @@ all: $(R30R2_BIN) compare
 # Build the R30R2 CLI tool
 $(R30R2_BIN): $(R30R2_SOURCES)
 	@echo "Building $(R30R2_BIN)..."
-	$(GOBUILD) $(BUILD_FLAGS) -o $(R30R2_BIN) r30r2-main.go r30r2-cli.go
+	$(GOBUILD) $(BUILD_FLAGS) -o $(R30R2_BIN) main.go
 	@echo "✓ Built $(R30R2_BIN)"
 
 # Build both comparison tools
@@ -48,15 +46,6 @@ $(COMPARE_UINT64_BIN): $(COMPARE_UINT64_SOURCES)
 	@echo "Building $(COMPARE_UINT64_BIN)..."
 	$(GOBUILD) $(BUILD_FLAGS) -o $(COMPARE_UINT64_BIN) misc/compare-uint64.go
 	@echo "✓ Built $(COMPARE_UINT64_BIN)"
-
-# Build the visualization tool
-$(VISUALIZE_BIN): $(VISUALIZE_SOURCES)
-	@echo "Building $(VISUALIZE_BIN)..."
-	$(GOBUILD) $(BUILD_FLAGS) -o $(VISUALIZE_BIN) misc/visualize-r30r2.go
-	@echo "✓ Built $(VISUALIZE_BIN)"
-
-# Convenience alias for building visualization tool
-visualize: $(VISUALIZE_BIN)
 
 # Run comparison benchmarks
 compare-run: compare
@@ -83,8 +72,8 @@ clean:
 	rm -f $(R30R2_BIN)
 	rm -f $(COMPARE_READ_BIN)
 	rm -f $(COMPARE_UINT64_BIN)
-	rm -f $(VISUALIZE_BIN)
 	rm -f misc/stdlib-rng
+	rm -f misc/visualize-r30r2
 	rm -f *.prof
 	rm -f *.test
 	rm -f *.bin
@@ -105,7 +94,7 @@ test-entropy: r30r2
 # Quick smoke test
 smoke: r30r2
 	@echo "Running smoke test..."
-	@./$(R30R2_BIN) --seed=12345 --bytes=1024 > /dev/null
+	@./$(R30R2_BIN) raw --seed=12345 --bytes=1024 > /dev/null
 	@echo "✓ Smoke test passed"
 
 # Show help
@@ -122,7 +111,6 @@ help:
 	@echo "  compare-read   Build compare-read tool (MB/s benchmark)"
 	@echo "  compare-uint64 Build compare-uint64 tool (ns/call benchmark)"
 	@echo "  compare-run    Run both comparison benchmarks"
-	@echo "  visualize      Build R30R2 visualization tool"
 	@echo "  bench          Run go test benchmarks (table format)"
 	@echo "  fmt            Format code with gofmt"
 	@echo "  clean          Remove build artifacts"
