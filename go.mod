@@ -1,4 +1,4 @@
-module github.com/vrypan/r30r2
+module github.com/vrypan/ring30mix
 
 go 1.25.5
 

@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/vrypan/r30r2/rand"
+	"github.com/vrypan/ring30mix/rand"
 )
 
 // mathRandReader wraps math/rand to implement io.Reader

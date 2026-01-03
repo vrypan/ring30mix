@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"github.com/vrypan/r30r2/rand"
+	"github.com/vrypan/ring30mix/rand"
 )
 
 var (

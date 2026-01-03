@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/vrypan/r30r2/cmd"
+	"github.com/vrypan/ring30mix/cmd"
 )
 
 func main() {

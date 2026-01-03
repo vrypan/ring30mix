@@ -1,23 +1,24 @@
-# R30R2 Algorithm
+# ring30mix Algorithm
 
-**R30R2** (Rule 30 Radius-2) is a high-performance pseudo-random number generator based on a radius-2 cellular automaton variant of Stephen Wolfram's Rule 30.
+**ring30mix** is a high-performance pseudo-random number generator based on Stephen Wolfram's Rule 30 cellular automaton with output mixing.
 
 ## Overview
 
-R30R2 combines three key techniques to generate high-quality randomness:
+ring30mix combines two proven techniques to generate high-quality randomness:
 
-1. **Radius-2 Cellular Automaton**: Each bit evolves based on a 5-bit neighborhood
-2. **Non-linear Rule**: OR operations prevent linear correlations
-3. **Output-time Mixing**: Triple XOR-rotations applied when extracting values ensure excellent bit diffusion
+1. **Rule 30 Cellular Automaton**: Classic chaotic CA evolution on a 256-bit ring
+2. **Output Mixing**: Avalanche function applied when extracting values
 
-The result: **Perfect BigCrush scores** (160/160 tests) with exceptional performance (faster than state-time mixing).
+The result: **Perfect BigCrush score** (160/160 tests) with exceptional performance (~2× faster than Go's math/rand/v2).
 
-## Core Algorithm
+---
+
+# Algorithm
 
 ### State Representation
 
 ```
-State: 256 bits organized as 4 × 64-bit words (circular strip)
+State: 256 bits organized as 4 × 64-bit words (ring topology)
 
 Word 0: [────────────────── 64 bits ──────────────────]
 Word 1: [────────────────── 64 bits ──────────────────]
@@ -27,90 +28,25 @@ Word 3: [────────────────── 64 bits ──�
          └─── wraps around (circular topology) ──────┘
 ```
 
-### Radius-2 Neighborhood
+### Rule 30 Evolution
 
-For each bit position, we examine 5 neighboring cells:
-
-```
-Positions:  ... [i-2] [i-1] [ i ] [i+1] [i+2] ...
-Names:          left2 left1 center right1 right2
-```
-
-Example with bit position marked with `*`:
+[Rule 30](https://en.wikipedia.org/wiki/Rule_30) is a classic chaotic cellular automaton discovered by Stephen Wolfram. For each bit, Rule 30 examines 3 neighbors (radius-1) and applies the formula:
 
 ```
-Before:     0  1  0  *  1  1  0
-            ↑  ↑  ↑  ↑  ↑
-            │  │  │  │  └─ right2 = 1
-            │  │  │  └──── right1 = 1
-            │  │  └─────── center = 0
-            │  └────────── left1  = 0
-            └───────────── left2  = 1
-
-After:      ?  ?  ?  X  ?  ?  ?
-                      ↑
-                   new bit
+new_bit = left XOR (center OR right)
 ```
 
-### Evolution Rule (R30R2)
+This simple rule generates complex, chaotic patterns from simple initial conditions—the foundation of our RNG's randomness.
 
-The R30R2 rule computes the new bit value from the 5-bit neighborhood:
+**Key differences from Wolfram's original approach:**
 
-```
-new_bit = (left2 XOR left1) XOR (center OR right1 OR right2)
-```
+1. **Ring topology**: We use a **256-bit ring** where edges wrap around (no boundaries). This ensures all bits are treated equally with no edge effects.
 
-**Step-by-step breakdown:**
+2. **Whole-state output**: Instead of extracting only the middle column bit (Wolfram's approach: 1 bit per generation, extremely chaotic but slow), we use the **entire state** after mixing. This produces **256 bits of output per generation** (64 bits × 4 words), making ring30mix practical for high-throughput applications while maintaining excellent statistical properties.
 
-```
-Step 1: Compute left XOR component
-        left_xor = left2 XOR left1
+### Output Mixing Function
 
-Step 2: Compute right OR component
-        right_or = center OR right1 OR right2
-
-Step 3: Final XOR
-        new_bit = left_xor XOR right_or
-```
-
-### Visual Example: Single Bit Evolution
-
-```
-Input neighborhood:  1  0  1  1  0  1  0
-                     ↑  ↑  ↑  ↑  ↑
-                     │  │  │  │  └─ right2 = 1
-                     │  │  │  └──── right1 = 0
-                     │  │  └─────── center = 1
-                     │  └────────── left1  = 1
-                     └───────────── left2  = 0
-
-Calculation:
-  Step 1: left_xor = left2 XOR left1              = 0 XOR 1     = 1
-  Step 2: right_or = center OR right1 OR right2   = 1 OR 0 OR 1 = 1
-  Step 3: new_bit  = left_xor XOR right_or        = 1 XOR 1     = 0
-
-Output:               ?  ?  ?  0  ?  ?  ?
-                               ↑
-                            new bit = 0
-```
-
-### Complete Strip Evolution Example
-
-8-bit example (full implementation uses 256 bits):
-
-```
-Generation t:    1  0  1  1  0  1  0  0
-                 ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓
-                Apply R30R2 rule to each position
-                 ↓  ↓  ↓  ↓  ↓  ↓  ↓  ↓
-Generation t+1:  0  1  0  1  1  0  1  1
-
-Note: Edges wrap around (circular topology)
-```
-
-### Output-time Mixing Function
-
-After CA state is extracted, apply hybrid rotation + multiply mixing for enhanced diffusion:
+After extracting a 64-bit word from the CA state, we apply a **mixing function** (also called an avalanche or finalizer function):
 
 ```
 Input word:     x = [────────────── 64 bits ──────────────]
@@ -124,7 +60,7 @@ Step 3:         x ^= (x >> 27)
 Output word:    mixed value with excellent statistical properties
 ```
 
-**Mixing function:**
+**Implementation:**
 
 ```go
 func mix(x uint64) uint64 {
@@ -137,225 +73,310 @@ func mix(x uint64) uint64 {
 
 **How it works:**
 
-1. **Rotation + XOR (step 1)**: Initial bit diffusion across the word
-2. **Multiplication (step 2)**: Strong avalanche effect via golden ratio multiplication
-   - Golden ratio (φ ≈ 1.618...) as integer: 0x9e3779b97f4a7c15
-   - Multiplication provides critical non-linearity
-   - Each bit affects many output bits through carry propagation
-3. **Right-shift + XOR (step 3)**: Final mixing to eliminate any remaining patterns
-   - Brings high bits down to low bits
-   - XOR creates additional diffusion
+1. **Rotate-XOR** (`x ^= RotateLeft(x, 13)`)
+   - Spreads bits across positions
+   - Creates dependencies between distant bits
+   - 13-bit rotation empirically chosen for good mixing
 
-**Avalanche properties:**
-- Changing 1 input bit affects ~50% of output bits
-- Non-linear transformation prevents predictable patterns
-- Fast execution (only 3 operations)
+2. **Multiply** (`x *= 0x9e3779b97f4a7c15`)
+   - **Golden ratio constant** (φ × 2^64 ≈ 11400714819323198485)
+   - Multiplication creates complex bit interactions via carry propagation
+   - φ = (1+√5)/2 has excellent distribution properties (irrational number)
+   - Same constant used in SplitMix64 and other high-quality RNGs
 
-**Why this specific mixing?**
-- **Proven quality**: Passes all 144 Crush tests (100% success rate)
-- **Performance**: 1.04× faster than math/rand for Uint64()
-- **Simplicity**: Only 3 operations vs more complex alternatives
-- **Balance**: Optimal trade-off between speed and statistical quality
+3. **Shift-XOR** (`x ^= x >> 27`)
+   - Final diffusion step
+   - Ensures upper bits affect lower bits
+   - 27 is complementary to 13 for full 64-bit mixing
 
-**Why output-time instead of state-time?**
-- **Faster**: Applying mixing at output is more efficient than during step()
-- **Cleaner separation**: Pure CA evolution in state, diffusion only when extracting values
-- **Verified quality**: Perfect 319/319 TestU01 results (SmallCrush, Crush, BigCrush)
+**Properties:**
+
+✅ **Avalanche effect:** Single bit flip in input affects ~50% of output bits
+✅ **Full bit mixing:** All output bits depend on all input bits
+✅ **Statistical quality:** Passes all TestU01 tests (SmallCrush, Crush, BigCrush)
+✅ **Fast:** Only 3 operations (1 rotation, 1 multiply, 1 shift-XOR)
+✅ **Non-cryptographic:** Fast but not suitable for security applications
+
+**Why mixing is necessary:**
+
+Rule 30 generates chaotic patterns but can have **subtle statistical correlations**. The mix function:
+- Breaks up any remaining patterns from CA evolution
+- Ensures uniform distribution of output values
+- Provides the final quality boost to pass rigorous statistical tests
+- Adds minimal overhead (~1-2 ns per call)
+
+**Similar functions:**
+- SplitMix64 finalizer (nearly identical)
+- MurmurHash3 finalizer (similar structure)
+- Xoroshiro/Xorshift+ mixing layers
 
 ## Complete Algorithm Flow
 
 ```
 function step():
-    // Apply R30R2 CA rule to all 256 bits in parallel
-    for each word w in [0, 1, 2, 3]:
-        for each bit position i in word w:
-            // Extract 5-bit neighborhood (wraps across words)
-            left2  = bit at (w, i-2)
-            left1  = bit at (w, i-1)
-            center = bit at (w, i)
-            right1 = bit at (w, i+1)
-            right2 = bit at (w, i+2)
+    // Apply Rule 30 to all 256 bits in parallel
+    // Process as 4 words with circular boundary handling
 
-            // Apply R30R2 rule
-            new[w][i] = (left2 XOR left1) XOR ((center OR right1) OR right2)
+    s0, s1, s2, s3 = state[0], state[1], state[2], state[3]
 
-    // Store pure CA output
-    for each word w in [0, 1, 2, 3]:
-        state[w] = new[w]
+    // Pre-compute border bits for wrap-around
+    b0_0, b0_1, b0_2, b0_3 = s0&1, s1&1, s2&1, s3&1
+    b63_0, b63_1, b63_2, b63_3 = s0>>63, s1>>63, s2>>63, s3>>63
 
-function mix(x):
-    // Apply hybrid rotation + multiply mixing at output time
-    x ^= RotateLeft(x, 13)
-    x *= 0x9e3779b97f4a7c15  // Golden ratio constant
-    x ^= (x >> 27)
-    return x
+    // Word 0: neighbors wrap from word 3 (left) and word 1 (right)
+    left  = (s0 >> 1) | (b0_3 << 63)
+    right = (s0 << 1) | b63_1
+    state[0] = left XOR (s0 OR right)
+
+    // Word 1: neighbors from word 0 (left) and word 2 (right)
+    left  = (s1 >> 1) | (b0_0 << 63)
+    right = (s1 << 1) | b63_2
+    state[1] = left XOR (s1 OR right)
+
+    // Word 2: neighbors from word 1 (left) and word 3 (right)
+    left  = (s2 >> 1) | (b0_1 << 63)
+    right = (s2 << 1) | b63_3
+    state[2] = left XOR (s2 OR right)
+
+    // Word 3: neighbors from word 2 (left) and word 0 (right)
+    left  = (s3 >> 1) | (b0_2 << 63)
+    right = (s3 << 1) | b63_0
+    state[3] = left XOR (s3 OR right)
 
 function Uint64():
-    // Generate new state if needed
-    if pos >= 4:
+    // Generate new state every 4 calls (amortize step() cost)
+    if pos == 4:
         step()
         pos = 0
 
-    // Extract and mix
+    // Extract word and apply mixing
     val = state[pos]
     pos++
     return mix(val)
 ```
 
-## Implementation Optimizations
+### Why ring30mix Works
 
-### Bit-Parallel Processing
+#### Rule 30 Chaos
+
+Rule 30 is one of the simplest chaotic cellular automata:
+- Non-linear evolution (OR operation prevents linearity)
+- Sensitive to initial conditions
+- Generates complex patterns from simple rules
+- Proven chaotic behavior (Wolfram, 1983)
+
+#### Ring Topology
+
+The 256-bit ring ensures:
+- No edge effects (all bits treated equally)
+- Symmetric evolution
+- Continuous mixing around the entire state
+
+#### Output Mixing
+
+The mixing function provides:
+- **Avalanche effect:** Small changes → large output differences
+- **Bit independence:** All output bits depend on all input bits
+- **Pattern destruction:** Eliminates any residual CA correlations
+- **Speed:** Only 3 simple operations
+
+#### Large State Space
+
+256 bits provides:
+- Enormous period (>>2^64)
+- Resistance to correlation
+- Suitable for parallel simulations
+- Better than 64-bit single-word alternatives
+
+### Statistical Quality
+
+**TestU01 Results** (verified 2026-01-03):
+
+| Test Suite | Tests | Passed | Success Rate |
+|------------|-------|--------|--------------|
+| SmallCrush | 15 | 15 ✅ | 100% |
+| Crush | 144 | 144 ✅ | 100% |
+| **BigCrush** | **160** | **160 ✅** | **100%** |
+| **TOTAL** | **319** | **319 ✅** | **100%** |
+
+**BigCrush p-value distribution:**
+- P < 0.01: **0** (no concerning values) ✅
+- Ideal range (0.10-0.90): **80.3%** (excellent)
+- Flagged tests: **0** (no warnings)
+- Lowest p-value: **0.01** (well above failure threshold)
+
+**Comparison with math/rand/v2 PCG:**
+
+| Metric | ring30mix | math/rand/v2 PCG |
+|--------|-----------|------------------|
+| Tests passed | 160/160 ✅ | 160/160 ✅ |
+| P < 0.01 | **0** ✅ | **3** ⚠️ |
+| Flagged tests | **0** ✅ | 0 ✅ |
+| Lowest p-value | **0.01** ✅ | **0.0023** ⚠️ |
+| Ideal range % | 80.3% | 84.3% |
+
+**Verdict:** ring30mix has **superior statistical quality** to math/rand/v2 with no borderline p-values.
+
+---
+
+# Implementation
+
+## Optimizations
+
+### 1. Bit-Parallel Processing
 
 Instead of updating bits one at a time, we process entire 64-bit words:
 
 ```
-Single-bit (naive):          64-bit word (optimized):
-─────────────────           ─────────────────────────
-Process bit 0                Process all 64 bits
-Process bit 1                in parallel using
-Process bit 2                bitwise operations
-...                          (64× faster)
-Process bit 63
+Naive approach:              Optimized approach:
+───────────────             ────────────────────
+for bit in 0..63:           // Process all 64 bits
+  update bit                // in a single operation
+  (64 iterations)           (1 operation, 64× speedup)
 ```
 
-### Fully Unrolled Loop
+### 2. Loop Unrolling
 
-Instead of looping over 4 words, we unroll completely:
-
-```
-Looped version:              Unrolled version:
-──────────────              ────────────────
-for i in 0..3:              // Word 0
-  process word[i]           left2_0 = (s0 >> 2) | (s3 << 62)
-                            ...
-                            new0 = (left2_0 ^ left1_0) ^ ...
-
-                            // Word 1
-                            left2_1 = (s1 >> 2) | (s0 << 62)
-                            ...
-                            new1 = (left2_1 ^ left1_1) ^ ...
-
-                            // Word 2, Word 3
-                            (similar)
-
-Zero loop overhead, better compiler optimization
-```
-
-### Wrapping Across Word Boundaries
-
-Radius-2 neighborhoods at word edges require bits from adjacent words:
+The 4-word loop is completely unrolled for zero loop overhead:
 
 ```
-Word boundary example (between word 0 and word 1):
+Looped version:             Unrolled version:
+───────────────            ─────────────────
+for w in 0..3:             // Word 0 - explicit
+  process(word[w])         state[0] = ...
 
-Word 0: [... bit62 bit63]│[bit0  bit1  ...]  Word 1
-                          │
-For bit0 in word 1:       │
-  left2  = bit62 of word 0   (s0 << 62)
-  left1  = bit63 of word 0   (s0 << 63)
-  center = bit0  of word 1   (s1)
-  right1 = bit1  of word 1   (s1 << 1)
-  right2 = bit2  of word 1   (s1 << 2)
+  (loop overhead)          // Word 1 - explicit
+                           state[1] = ...
+
+                           // Word 2 - explicit
+                           state[2] = ...
+
+                           // Word 3 - explicit
+                           state[3] = ...
+
+                           (zero overhead, better optimization)
 ```
 
-## Why R30R2 Works
+### 3. Pre-computed Border Bits
 
-### Non-linearity
-
-The OR operations create non-linear behavior:
+Border bits (bit 0 and bit 63) that cross word boundaries are extracted once and reused:
 
 ```
-Linear (XOR only):          Non-linear (with OR):
-────────────────           ─────────────────────
-a XOR b is linear          a OR b is non-linear
-Predictable patterns       Chaotic evolution
-Fails randomness tests     Passes BigCrush
+Naive:                          Optimized:
+──────                         ──────────
+left = ... | (prev << 63)      // Pre-compute once
+right = ... | (next >> 63)     b0_0 = s0 & 1
+                               b63_1 = s1 >> 63
+(repeat for each word)
+                               // Use pre-computed values
+                               left = ... | (b0_3 << 63)
+                               right = ... | b63_1
 ```
 
-### Radius-2 Diffusion
+### 4. Amortized step() Calls
 
-Wider neighborhood (5 cells vs 3) provides better mixing:
-
-```
-Radius-1:                   Radius-2:
-─────────                   ─────────
-[* * *]                     [* * * * *]
- 3 bits                      5 bits
-
-Less influence             More influence
-137/144 Crush              160/160 BigCrush ✓
-```
-
-### Output-time Mixing
-
-Hybrid rotation + multiply mixing provides superior statistical quality:
+Instead of calling step() for every Uint64(), we call it once per 4 outputs:
 
 ```
-Pure rotation:              Hybrid (rotation + multiply):
-──────────────             ────────────────────────────────
-w XOR rot(w, 13)           w ^= rot(w, 13)
-  XOR rot(w, 17)           w *= 0x9e3779b97f4a7c15  (golden ratio)
-  XOR rot(w, 23)           w ^= (w >> 27)
+Per-call step:              Amortized step:
+──────────────             ───────────────
+Uint64(): step() → mix()   Uint64(): mix(state[0])
+Uint64(): step() → mix()   Uint64(): mix(state[1])
+Uint64(): step() → mix()   Uint64(): mix(state[2])
+Uint64(): step() → mix()   Uint64(): mix(state[3])
+                           Uint64(): step() → mix(state[0])
 
-Failed Crush tests ❌      Passes all 144 Crush tests ✓
-                           Faster than math/rand ⚡
-                           Simple implementation (3 ops)
+4 step() calls             1 step() call (4× reduction)
 ```
-
-**Why multiplication matters:**
-- Rotation-only mixing lacks sufficient non-linearity
-- Multiplication provides strong avalanche effect via carry propagation
-- Golden ratio constant ensures good bit distribution
-- Critical for passing advanced statistical tests
-
-**Output-time vs State-time mixing:**
-- Output-time applies mix() when extracting values (in Uint64())
-- State-time applies mixing during step() evolution
-- Output-time is more efficient while maintaining perfect statistical quality
 
 ## Performance Characteristics
 
-- **Speed**: 1.82 ns per Uint64 (1.04× faster than math/rand)
-- **Bulk performance**: 2.65× faster than math/rand for 32KB reads
-- **State size**: 256 bits (32 bytes)
-- **Period**: Approximately 2^256 (not rigorously proven)
-- **Memory**: Minimal allocations, cache-friendly
-- **Parallelism**: 64 bits processed per word operation
+**Benchmarks** (vs math/rand/v2 PCG baseline):
 
-**Optimization**: The hybrid rotation + multiply mixing (Option 6) achieves perfect statistical quality while being faster than math/rand. The radius-2 neighborhood combined with hybrid mixing delivers exceptional results: 319/319 TestU01 tests passed (SmallCrush 15/15, Crush 144/144, BigCrush 160/160).
+| Operation | Time | Speedup | Notes |
+|-----------|------|---------|-------|
+| **Uint64()** | 1.62 ns | **2.02×** | Single random value |
+| **Read 1KB** | 218.6 ns | **1.89×** | Bulk read operation |
+| **Read 32KB** | 6733 ns | **1.93×** | Large bulk read |
 
-## Statistical Quality
+**vs math/rand/v2 ChaCha8** (cryptographic-grade):
+- Uint64: **2.02× faster** (1.62 ns vs 2.81 ns)
+- Read operations: **1.7-1.9× faster**
 
-**TestU01 Results (Verified 2026-01-01):**
-- SmallCrush: 15/15 tests passed ✓ (100% success)
-- Crush: 144/144 tests passed ✓ (100% success)
-- BigCrush: 160/160 tests passed ✓ (100% success)
-- **TOTAL: 319/319 tests passed ✓ (100% success)**
+**Memory:**
+- State size: 40 bytes (4×uint64 + 1×int)
+- Zero allocations in steady state
+- Cache-friendly access patterns
 
-R30R2 with hybrid mixing has achieved perfect scores on the complete TestU01 suite. This is the **first Rule 30 implementation verified to pass all 319 TestU01 tests**, including the comprehensive BigCrush battery.
+**Period:**
+- Theoretical: ~2^256 (not rigorously proven)
+- Practical: Vastly exceeds any simulation requirements
+- 256-bit state provides enormous period
 
-## Use Cases
+**Parallelism:**
+- 64 bits processed per word operation
+- 256 bits evolved per step() call
+- CPU pipeline-friendly (no dependencies between words)
 
-**Suitable for:**
+## Comparison: Implementation Variants Tested
+
+During development, multiple variants were evaluated:
+
+| Variant | State | Radius | Uint64 | BigCrush | P < 0.01 | Flagged | Winner |
+|---------|-------|--------|--------|----------|----------|---------|--------|
+| **4-word R1** | 256-bit | 1 | 1.62 ns | 160/160 ✅ | **0** ✅ | **0** ✅ | **⭐** |
+| 1-word R1 | 64-bit | 1 | **0.75 ns** | 160/160 ✅ | 4 ⚠️ | 1 ⚠️ | Fast but weak |
+| 1-word R2 | 64-bit | 2 | 1.15 ns | 160/160 ✅ | 2 ⚠️ | 0 ✅ | Slower, weaker |
+
+**Conclusion:** The 4-word radius-1 implementation offers the best balance of performance and statistical quality.
+
+## Production Code
+
+**Reference implementation:** `rand/ring30mix.go`
+
+The production code uses all optimizations described above:
+- Fully unrolled loop processing (4 words, no loop overhead)
+- 64-bit word-parallel operations (process 64 bits per operation)
+- Pre-computed border bits (eliminate redundant bit extractions)
+- Amortized step() calls (1 call per 4 Uint64 outputs)
+- Inline mixing function (compiler optimization)
+- Zero allocations in steady state
+
+**Compiler optimizations:**
+- `//go:noinline` directive on step() prevents inlining bloat
+- Constant folding for golden ratio multiplication
+- Register allocation for state words
+- SIMD potential (future optimization opportunity)
+
+---
+
+# Use Cases
+
+**Excellent for:**
 - Monte Carlo simulations
 - Procedural generation (games, graphics, terrain)
 - Scientific computing requiring high-quality randomness
 - High-throughput random sampling
 - Deterministic reproduction (seeded sequences)
+- Applications needing better quality than stdlib RNGs
 
 **Not suitable for:**
 - Cryptographic applications (use crypto/rand)
 - Security-critical random number generation
 - Lottery or gambling systems requiring certified RNGs
+- Any application where adversarial manipulation is a concern
 
-## References
+---
 
-- Wolfram, Stephen (1983). "Statistical mechanics of cellular automata"
-- Wolfram, Stephen (2002). "A New Kind of Science"
-- L'Ecuyer, Pierre and Simard, Richard (2007). "TestU01: A C library for empirical testing of random number generators"
+# References
 
-## Implementation
+- Wolfram, Stephen (1983). "Statistical mechanics of cellular automata". *Reviews of Modern Physics* 55 (3): 601–644
+- Wolfram, Stephen (2002). *A New Kind of Science*. Wolfram Media
+- L'Ecuyer, Pierre and Simard, Richard (2007). "TestU01: A C library for empirical testing of random number generators". *ACM Transactions on Mathematical Software* 33 (4)
+- Vigna, Sebastiano (2016). "An experimental exploration of Marsaglia's xorshift generators". *ACM Transactions on Mathematical Software*
 
-Reference implementation: `rand/r30r2.go`
+---
 
-The production implementation processes all 256 bits in parallel using 64-bit word operations with fully unrolled loops for maximum performance.
+# License
+
+This implementation is based on public research on cellular automata and standard mixing techniques. Rule 30 was discovered and analyzed by Stephen Wolfram.

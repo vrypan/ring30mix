@@ -68,7 +68,7 @@ BEGIN {
 
 END {
     # Define desired order of RNGs
-    split("MathRandV2PCG MathRandV2ChaCha8 R30R2 MathRand CryptoRand", ordered_rngs)
+    split("MathRandV2PCG MathRandV2ChaCha8 Ring30Mix MathRand CryptoRand", ordered_rngs)
     ordered_count = 5
 
     # Print table header

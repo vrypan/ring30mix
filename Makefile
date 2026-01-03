@@ -1,7 +1,7 @@
-# R30R2 RNG Makefile
+# ring30mix RNG Makefile
 
 # Binary names
-R30R2_BIN = r30r2
+RING30MIX_BIN = ring30mix
 COMPARE_READ_BIN = misc/compare-read
 COMPARE_UINT64_BIN = misc/compare-uint64
 
@@ -17,20 +17,20 @@ LDFLAGS = -s -w
 BUILD_FLAGS = -ldflags "$(LDFLAGS)"
 
 # Source files for dependency tracking
-R30R2_SOURCES = main.go cmd/root.go cmd/raw.go cmd/ascii.go cmd/version.go rand/r30r2.go
-COMPARE_READ_SOURCES = misc/compare-read.go rand/r30r2.go
-COMPARE_UINT64_SOURCES = misc/compare-uint64.go rand/r30r2.go
+RING30MIX_SOURCES = main.go cmd/root.go cmd/raw.go cmd/ascii.go cmd/version.go rand/ring30mix.go
+COMPARE_READ_SOURCES = misc/compare-read.go rand/ring30mix.go
+COMPARE_UINT64_SOURCES = misc/compare-uint64.go rand/ring30mix.go
 
 .PHONY: all compare clean fmt help compare-run test-entropy smoke deps bench
 
 # Default target
-all: $(R30R2_BIN) compare
+all: $(RING30MIX_BIN) compare
 
-# Build the R30R2 CLI tool
-$(R30R2_BIN): $(R30R2_SOURCES)
-	@echo "Building $(R30R2_BIN)..."
-	$(GOBUILD) $(BUILD_FLAGS) -o $(R30R2_BIN) main.go
-	@echo "✓ Built $(R30R2_BIN)"
+# Build the ring30mix CLI tool
+$(RING30MIX_BIN): $(RING30MIX_SOURCES)
+	@echo "Building $(RING30MIX_BIN)..."
+	$(GOBUILD) $(BUILD_FLAGS) -o $(RING30MIX_BIN) main.go
+	@echo "✓ Built $(RING30MIX_BIN)"
 
 # Build both comparison tools
 compare: $(COMPARE_READ_BIN) $(COMPARE_UINT64_BIN)
@@ -69,11 +69,11 @@ fmt:
 clean:
 	@echo "Cleaning..."
 	$(GOCLEAN)
-	rm -f $(R30R2_BIN)
+	rm -f $(RING30MIX_BIN)
 	rm -f $(COMPARE_READ_BIN)
 	rm -f $(COMPARE_UINT64_BIN)
 	rm -f misc/stdlib-rng
-	rm -f misc/visualize-r30r2
+	rm -f misc/visualize-ring30mix
 	rm -f *.prof
 	rm -f *.test
 	rm -f *.bin
@@ -88,25 +88,25 @@ deps:
 	@echo "✓ Dependencies updated"
 
 # Test randomness with ent - compares all three RNGs
-test-entropy: r30r2
+test-entropy: ring30mix
 	@./misc/test-entropy.sh
 
 # Quick smoke test
-smoke: r30r2
+smoke: ring30mix
 	@echo "Running smoke test..."
-	@./$(R30R2_BIN) raw --seed=12345 --bytes=1024 > /dev/null
+	@./$(RING30MIX_BIN) raw --seed=12345 --bytes=1024 > /dev/null
 	@echo "✓ Smoke test passed"
 
 # Show help
 help:
-	@echo "R30R2 RNG Makefile"
+	@echo "ring30mix RNG Makefile"
 	@echo ""
 	@echo "Usage:"
 	@echo "  make [target]"
 	@echo ""
 	@echo "Targets:"
 	@echo "  all            Build all binaries (default)"
-	@echo "  r30r2          Build r30r2 CLI tool"
+	@echo "  ring30mix      Build ring30mix CLI tool"
 	@echo "  compare        Build comparison tools (read + uint64)"
 	@echo "  compare-read   Build compare-read tool (MB/s benchmark)"
 	@echo "  compare-uint64 Build compare-uint64 tool (ns/call benchmark)"
@@ -120,7 +120,7 @@ help:
 	@echo "  help           Show this help message"
 	@echo ""
 	@echo "Examples:"
-	@echo "  make r30r2"
+	@echo "  make ring30mix"
 	@echo "  make compare-run"
 	@echo "  make test-entropy"
-	@echo "  make clean r30r2"
+	@echo "  make clean ring30mix"

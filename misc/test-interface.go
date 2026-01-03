@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/vrypan/r30r2/rand"
+	"github.com/vrypan/ring30mix/rand"
 )
 
 func main() {

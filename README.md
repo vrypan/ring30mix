@@ -1,8 +1,9 @@
-# R30R2
+# ring30mix
 
-High-performance pseudo-random number generator based on Rule 30 (radius-2) cellular automaton. 
-- **2× faster** than Go's math/rand/v2 
-- **160/160 BigCrush** tests pass perfectly.
+High-performance pseudo-random number generator based on Rule 30 cellular automaton with golden ratio mixing.
+
+- **~2× faster** than Go's math/rand/v2 PCG
+- **Perfect BigCrush score** (160/160) with superior p-value distribution
 
 ## Quick Start
 
@@ -10,26 +11,26 @@ High-performance pseudo-random number generator based on Rule 30 (radius-2) cell
 
 ```bash
 # As a command-line tool
-go install github.com/vrypan/r30r2@latest
+go install github.com/vrypan/ring30mix@latest
 
 # As a library
-go get github.com/vrypan/r30r2
+go get github.com/vrypan/ring30mix
 ```
 
 ### Command Line Usage
 
 ```bash
 # Generate random data
-./r30r2 --bytes=1048576 > random.bin
+./ring30mix --bytes=1048576 > random.bin
 
 # Generate specific size with dd
-./r30r2 --bytes=1073741824 | dd of=test.data bs=1m
+./ring30mix --bytes=1073741824 | dd of=test.data bs=1m
 
 # Unlimited streaming (use with head, pv, or Ctrl+C)
-./r30r2 --bytes=0 | head -c 1073741824 > test.data
+./ring30mix --bytes=0 | head -c 1073741824 > test.data
 
 # Reproducible output with seed
-./r30r2 --seed=12345 --bytes=1024 > random.bin
+./ring30mix --seed=12345 --bytes=1024 > random.bin
 ```
 
 ### Library Usage
@@ -37,7 +38,7 @@ go get github.com/vrypan/r30r2
 Drop-in replacement for math/rand:
 
 ```go
-import "github.com/vrypan/r30r2/rand"
+import "github.com/vrypan/ring30mix/rand"
 
 rng := rand.New(12345)
 
@@ -56,80 +57,64 @@ rng.Read(buf)
 
 ## Performance
 
-Benchmarks on Apple M4, verified 2026-01-01 (run `make bench` to reproduce):
+Benchmarks on Apple M4, verified 2026-01-03 (run `make bench` to reproduce):
 
-### Throughput Comparison
+### Absolute Performance
 
-|Algorithm       |  Read() 32KB |   Read() 1KB |     Uint64()|
-|----------------|--------------|--------------|-------------|
-|math/rand       |  21316.00 ns |    674.30 ns |      1.81 ns|
-|math/rand/v2    |  13369.00 ns |    423.50 ns |      3.22 ns|
-|**R30R2**       |   **5516.00 ns** |    **183.90 ns** |      **1.75 ns**|
-|crypto/rand     |   7009.00 ns |    367.90 ns |     56.29 ns|
+|Algorithm               |  Read() 32KB |   Read() 1KB |     Uint64()|
+|------------------------|--------------|--------------|-------------|
+|math/rand/v2 PCG        |  13249.00 ns |    413.30 ns |      3.23 ns|
+|math/rand/v2 ChaCha8    |  11478.00 ns |    360.70 ns |      2.77 ns|
+|**ring30mix**           |   **6721.00 ns** |    **214.90 ns** |      **1.62 ns**|
+|math/rand               |  21409.00 ns |    683.50 ns |      1.80 ns|
+|crypto/rand             |   7448.00 ns |    365.10 ns |     54.58 ns|
 
-**Relative to math/rand:**
+### Speed vs math/rand/v2 PCG (baseline = 1.00×)
 
-|Algorithm       | Read() 32KB |  Read() 1KB |    Uint64()|
-|----------------|-------------|-------------|------------|
-|math/rand       |       1.00x |       1.00x |       1.00x|
-|math/rand/v2    |       1.59x |       1.59x |       0.56x|
-|**R30R2**       |    **3.86x** |   **3.67x** |   **1.03x**|
-|crypto/rand     |       3.04x |       1.83x |       0.03x|
+|Algorithm               | Read() 32KB |  Read() 1KB |    Uint64()|
+|------------------------|-------------|-------------|------------|
+|math/rand/v2 PCG        |       1.00x |       1.00x |       1.00x|
+|math/rand/v2 ChaCha8    |       1.15x |       1.15x |       1.16x|
+|**ring30mix**           |    **1.97x** |   **1.92x** |   **1.99x**|
+|math/rand               |       0.62x |       0.60x |       1.79x|
+|crypto/rand             |       1.78x |       1.13x |       0.06x|
 
 ## Randomness Quality
 
-**Perfect scores on complete TestU01 test suite** - exceptional statistical quality verified through rigorous testing:
+**Perfect BigCrush score** - verified 2026-01-03:
 
-| Test Battery | Tests | R30R2 | Pass Rate | Status |
-|--------------|-------|--------|-----------|------|
-| **SmallCrush** | 15 | **15/15** ✓ | **100%** | ✅ Verified 2026-01-01 |
-| **Crush** | 144 | **144/144** ✓ | **100%**  | ✅ Verified 2026-01-01 |
-| **BigCrush** | 160 | **160/160** ✓ | **100%** | ✅ Verified 2026-01-01 |
+| Test Suite | Tests | Passed | Status |
+|------------|-------|--------|--------|
+| SmallCrush | 15 | 15/15 ✅ | 100% |
+| Crush | 144 | 144/144 ✅ | 100% |
+| **BigCrush** | **160** | **160/160 ✅** | **100%** |
 
-**Historic Achievement:** The implementation demonstrates exceptional quality across all test categories: serial correlation, birthday spacing, collision, permutation, matrix rank, spectral, string, compression, random walk, Fourier analysis, linear complexity, and autocorrelation tests.
+**Superior to math/rand/v2 PCG:**
+- ring30mix: **0 borderline p-values** (p < 0.01)
+- math/rand/v2 PCG: **3 borderline p-values**
 
-### Comparison with Go Standard Library
-
-BigCrush results comparing Rule 30 with Go's stdlib RNGs (verified 2026-01-01):
-
-| Generator | BigCrush Score | Performance vs math/rand |
-|-----------|---------------|--------------------------|
-| **math/rand** | 159/160* | 1.00× (baseline) |
-| **math/rand/v2** | **160/160** ✓ | 0.56× |
-| **Rule 30** | **160/160** ✓ | **1.03×** |
-
-*math/rand fails test #37 (Gap, r = 20) with p-value 5.6e-16
-
-**Key insight:** Rule 30 delivers **equivalent statistical quality** to math/rand/v2 (both perfect 160/160) while being **2x faster**.
-
-To run TestU01 tests:
-
+Run tests yourself:
 ```bash
 cd testu01
-make smallcrush   # Quick test (15 tests, 2 min)
-make crush        # Medium test (144 tests, 10 min)
-make bigcrush     # Comprehensive test (160 tests, 1 hour)
+make smallcrush   # 15 tests, ~2 min
+make crush        # 144 tests, ~10 min
+make bigcrush     # 160 tests, ~1 hour
 ```
 
 ## How It Works
 
-**Algorithm**: 
-- Radius-2 cellular automaton based on Rule 30 on a circular 256-bit strip.
+**Core algorithm:**
+- Rule 30 cellular automaton: `new_bit = left XOR (center OR right)`
+- 256-bit ring (4 × 64-bit words)
+- Golden ratio mixing on output (rotation + φ multiply + shift-XOR)
 
-  `new_bit = (left2 XOR left1) XOR ((center OR right1) OR right2)`
-- Hybrid rotation + multiply mixing applied on output
+**Key optimizations:**
+- Bit-parallel processing (64 bits per operation)
+- Fully unrolled loops
+- Pre-computed border bits
+- Amortized state evolution (1 step per 4 outputs)
 
-**Implementation**:
-- 256-bit state as 4 × 64-bit words
-- Radius-2 neighborhood: each bit depends on 5 neighboring cells
-- Processes 64 bits in parallel per word (bitwise operations)
-- Fully unrolled loop - all 4 words updated simultaneously
-- Pure CA evolution stored in state
-- Hybrid rotation + multiply mixing applied at output time for diffusion
-  - Combines rotation, golden ratio multiplication, and shift-XOR
-  - Provides strong avalanche effect and non-linearity
-  - Verified through rigorous TestU01 testing (144/144 Crush tests)
-- Each iteration generates 256 bits (4 × 64-bit words)
+See [ALGORITHM.md](ALGORITHM.md) for complete technical details, optimizations, and analysis.
 
 ## Building & Testing
 

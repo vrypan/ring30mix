@@ -5,7 +5,7 @@ import (
 	"math/bits"
 )
 
-// RNG implements a 1D cellular automaton (Rule 30) on a circular 256-bit strip
+// RNG implements a 1D cellular automaton (Rule 30) on a 256-bit ring
 type RNG struct {
 	state [4]uint64 // 256-bit state (4 × 64-bit words)
 	pos   int       // current position for output (0-3)
@@ -29,7 +29,7 @@ func New(seed uint64) *RNG {
 	return rng
 }
 
-// step applies radius-1 Rule 30 to the circular 256-bit strip
+// step applies radius-1 Rule 30 to the 256-bit ring
 // Rule 30: new_bit = left XOR (center OR right)
 // Unrolled and optimized with pre-computed borders
 //

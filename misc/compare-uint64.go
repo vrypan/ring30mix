@@ -8,7 +8,7 @@ import (
 	mathrandv2 "math/rand/v2"
 	"time"
 
-	"github.com/vrypan/r30r2/rand"
+	"github.com/vrypan/ring30mix/rand"
 )
 
 // BenchResult holds benchmark results

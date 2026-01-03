@@ -8,7 +8,7 @@ import (
 
 const (
 	Version = "1.0.0"
-	GitRepo = "github.com/vrypan/r30r2"
+	GitRepo = "github.com/vrypan/ring30mix"
 )
 
 var versionCmd = &cobra.Command{
