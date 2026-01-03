@@ -31,7 +31,7 @@ mathrandv2-gen: mathrandv2-gen.go
 smallcrush: test-smallcrush ../r30r2
 	@echo "Running SmallCrush test (approx 1-2 minutes)..."
 	@echo "Generating unlimited random data and piping to TestU01..."
-	@LOGBASE=testu01/smallcrush; \
+	@LOGBASE=smallcrush; \
 	if [ ! -f $$LOGBASE.log ]; then \
 		LOGFILE=$$LOGBASE.log; \
 	else \
@@ -42,13 +42,13 @@ smallcrush: test-smallcrush ../r30r2
 		LOGFILE=$$LOGBASE-$$N.log; \
 	fi; \
 	echo "Output will be saved to $$LOGFILE"; \
-	cd .. && ./r30r2 --bytes=0 2>/dev/null | ./testu01/test-smallcrush | tee $$LOGFILE
+	../r30r2 --bytes=0 2>/dev/null | ./testu01/test-smallcrush | tee $$LOGFILE
 
 # Run Crush (medium test)
 crush: test-crush ../r30r2
 	@echo "Running Crush test (approx 1 hour)..."
 	@echo "Generating unlimited random data and piping to TestU01..."
-	@LOGBASE=testu01/crush; \
+	@LOGBASE=crush; \
 	if [ ! -f $$LOGBASE.log ]; then \
 		LOGFILE=$$LOGBASE.log; \
 	else \
@@ -59,13 +59,13 @@ crush: test-crush ../r30r2
 		LOGFILE=$$LOGBASE-$$N.log; \
 	fi; \
 	echo "Output will be saved to $$LOGFILE"; \
-	cd .. && ./r30r2 --bytes=0 2>/dev/null | ./testu01/test-crush | tee $$LOGFILE
+	../r30r2 --bytes=0 2>/dev/null | ./testu01/test-crush | tee $$LOGFILE
 
 # Run BigCrush (comprehensive test)
 bigcrush: test-bigcrush ../r30r2
 	@echo "Running BigCrush test (approx 8 hours)..."
 	@echo "Generating unlimited random data and piping to TestU01..."
-	@LOGBASE=testu01/bigcrush; \
+	@LOGBASE=bigcrush; \
 	if [ ! -f $$LOGBASE.log ]; then \
 		LOGFILE=$$LOGBASE.log; \
 	else \
@@ -76,7 +76,7 @@ bigcrush: test-bigcrush ../r30r2
 		LOGFILE=$$LOGBASE-$$N.log; \
 	fi; \
 	echo "Output will be saved to $$LOGFILE"; \
-	cd .. && ./r30r2 --bytes=0 2>/dev/null | ./testu01/test-bigcrush | tee $$LOGFILE
+	../r30r2 --bytes=0 2>/dev/null | ./testu01/test-bigcrush | tee $$LOGFILE
 
 # Build r30r2 binary if needed
 ../r30r2:

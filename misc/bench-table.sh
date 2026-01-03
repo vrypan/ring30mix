@@ -68,11 +68,11 @@ BEGIN {
 
 END {
     # Define desired order of RNGs
-    split("MathRand MathRandV2 R30R2 CryptoRand", ordered_rngs)
-    ordered_count = 4
+    split("MathRandV2PCG MathRandV2ChaCha8 R30R2 MathRand CryptoRand", ordered_rngs)
+    ordered_count = 5
 
     # Print table header
-    printf "%-15s", "Algorithm"
+    printf "%-25s", "Algorithm"
     for (i = 0; i < test_count; i++) {
         test = test_order[i]
         printf " | %12s", test
@@ -80,7 +80,7 @@ END {
     printf "\n"
 
     # Print separator
-    printf "---------------"
+    printf "-------------------------"
     for (i = 0; i < test_count; i++) {
         printf "-|-------------"
     }
@@ -89,7 +89,7 @@ END {
     # Print data rows in specified order
     for (i = 1; i <= ordered_count; i++) {
         rng = ordered_rngs[i]
-        printf "%-15s", rng
+        printf "%-25s", rng
 
         for (j = 0; j < test_count; j++) {
             test = test_order[j]
@@ -109,18 +109,18 @@ END {
     print "═══════════════════════════════════════════════════════════════════════════"
     print ""
 
-    # Calculate and show speed comparison (MathRand as baseline)
-    if ("MathRand" in seen_rng) {
-        print "Speed Comparison (vs MathRand baseline = 1.00x):"
+    # Calculate and show speed comparison (MathRandV2PCG as baseline)
+    if ("MathRandV2PCG" in seen_rng) {
+        print "Speed Comparison (vs MathRandV2PCG baseline = 1.00x):"
         print ""
-        printf "%-15s", "Algorithm"
+        printf "%-25s", "Algorithm"
         for (i = 0; i < test_count; i++) {
             test = test_order[i]
             printf " |%12s", test
         }
         printf "\n"
 
-        printf "---------------"
+        printf "-------------------------"
         for (i = 0; i < test_count; i++) {
             printf "-|------------"
         }
@@ -128,12 +128,12 @@ END {
 
         for (i = 1; i <= ordered_count; i++) {
             rng = ordered_rngs[i]
-            printf "%-15s", rng
+            printf "%-25s", rng
 
             for (j = 0; j < test_count; j++) {
                 test = test_order[j]
                 ns = results[rng, test]
-                baseline = results["MathRand", test]
+                baseline = results["MathRandV2PCG", test]
 
                 if (ns != "" && baseline != "") {
                     # Speed = baseline_time / actual_time

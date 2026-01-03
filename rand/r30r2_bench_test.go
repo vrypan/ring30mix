@@ -77,11 +77,11 @@ func BenchmarkMathRand_Uint64(b *testing.B) {
 	}
 }
 
-// =======================
-// math/rand/v2 Benchmarks
-// =======================
+// ============================
+// math/rand/v2 PCG Benchmarks
+// ============================
 
-func BenchmarkMathRandV2_Read32KB(b *testing.B) {
+func BenchmarkMathRandV2PCG_Read32KB(b *testing.B) {
 	rng := mathrandv2.NewPCG(12345, 67890)
 	buf := make([]byte, 32<<10)
 	b.ResetTimer()
@@ -93,7 +93,7 @@ func BenchmarkMathRandV2_Read32KB(b *testing.B) {
 	}
 }
 
-func BenchmarkMathRandV2_Read1KB(b *testing.B) {
+func BenchmarkMathRandV2PCG_Read1KB(b *testing.B) {
 	rng := mathrandv2.NewPCG(12345, 67890)
 	buf := make([]byte, 1<<10)
 	b.ResetTimer()
@@ -105,8 +105,48 @@ func BenchmarkMathRandV2_Read1KB(b *testing.B) {
 	}
 }
 
-func BenchmarkMathRandV2_Uint64(b *testing.B) {
+func BenchmarkMathRandV2PCG_Uint64(b *testing.B) {
 	rng := mathrandv2.NewPCG(42, 12345)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = rng.Uint64()
+	}
+}
+
+// ===============================
+// math/rand/v2 ChaCha8 Benchmarks
+// ===============================
+
+func BenchmarkMathRandV2ChaCha8_Read32KB(b *testing.B) {
+	var seed [32]byte
+	binary.LittleEndian.PutUint64(seed[:], 12345)
+	rng := mathrandv2.NewChaCha8(seed)
+	buf := make([]byte, 32<<10)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for j := 0; j < len(buf); j += 8 {
+			binary.LittleEndian.PutUint64(buf[j:], rng.Uint64())
+		}
+	}
+}
+
+func BenchmarkMathRandV2ChaCha8_Read1KB(b *testing.B) {
+	var seed [32]byte
+	binary.LittleEndian.PutUint64(seed[:], 12345)
+	rng := mathrandv2.NewChaCha8(seed)
+	buf := make([]byte, 1<<10)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for j := 0; j < len(buf); j += 8 {
+			binary.LittleEndian.PutUint64(buf[j:], rng.Uint64())
+		}
+	}
+}
+
+func BenchmarkMathRandV2ChaCha8_Uint64(b *testing.B) {
+	var seed [32]byte
+	binary.LittleEndian.PutUint64(seed[:], 42)
+	rng := mathrandv2.NewChaCha8(seed)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = rng.Uint64()
