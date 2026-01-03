@@ -91,10 +91,10 @@ func mix(x uint64) uint64 {
 
 **Properties:**
 
-✅ **Avalanche effect:** Single bit flip in input affects ~50% of output bits
-✅ **Full bit mixing:** All output bits depend on all input bits
-✅ **Statistical quality:** Passes all TestU01 tests (SmallCrush, Crush, BigCrush)
-✅ **Fast:** Only 3 operations (1 rotation, 1 multiply, 1 shift-XOR)
+✅ **Avalanche effect:** Single bit flip in input affects ~50% of output bits  
+✅ **Full bit mixing:** All output bits depend on all input bits  
+✅ **Statistical quality:** Passes all TestU01 tests (SmallCrush, Crush, BigCrush)  
+✅ **Fast:** Only 3 operations (1 rotation, 1 multiply, 1 shift-XOR)  
 ✅ **Non-cryptographic:** Fast but not suitable for security applications
 
 **Why mixing is necessary:**
@@ -193,11 +193,10 @@ The mixing function provides:
 **TestU01 Results** (verified 2026-01-04):
 
 | Test Suite | P-values | Passed | Success Rate |
-|------------|----------|--------|--------------|
+|------------|---------:|-------:|-------------:|
 | SmallCrush | 15 | 15 ✅ | 100% |
 | Crush | 186 | 186 ✅ | 100% |
 | **BigCrush** | **254** | **254 ✅** | **100%** |
-| **TOTAL** | **455** | **455 ✅** | **100%** |
 
 **BigCrush p-value distribution (verified 2026-01-04):**
 - Borderline p-values (< 0.01 or > 0.99): **4** (2 low, 2 high)
@@ -208,7 +207,7 @@ The mixing function provides:
 **Comparison with math/rand/v2 PCG:**
 
 | Metric | ring30mix | math/rand/v2 PCG | math/rand |
-|--------|-----------|------------------|-----------|
+|:-------|-----------:|------------------:|-----------:|
 | P-values passed | 254/254 ✅ | 254/254 ✅ | 253/254 ⚠️ |
 | Borderline p-values | **4** ✅ | **5** ⚠️ | **10** ⚠️ |
 | Failed p-values | **0** ✅ | **0** ✅ | **1** ❌ |
