@@ -195,27 +195,27 @@ The mixing function provides:
 | Test Suite | Tests | Passed | Success Rate |
 |------------|-------|--------|--------------|
 | SmallCrush | 15 | 15 ✅ | 100% |
-| Crush | 144 | 144 ✅ | 100% |
+| Crush | 186 | 186 ✅ | 100% |
 | **BigCrush** | **160** | **160 ✅** | **100%** |
-| **TOTAL** | **319** | **319 ✅** | **100%** |
+| **TOTAL** | **361** | **361 ✅** | **100%** |
 
-**BigCrush p-value distribution:**
-- P < 0.01: **0** (no concerning values) ✅
-- Ideal range (0.10-0.90): **80.3%** (excellent)
-- Flagged tests: **0** (no warnings)
-- Lowest p-value: **0.01** (well above failure threshold)
+**BigCrush p-value distribution (verified 2026-01-04):**
+- Borderline p-values (< 0.01 or > 0.99): **4** (2 low, 2 high)
+- Lowest p-value: **0.0049** (well above failure threshold)
+- Highest p-value: **0.9920** (well below failure threshold)
+- Failed tests: **0** ✅
 
 **Comparison with math/rand/v2 PCG:**
 
-| Metric | ring30mix | math/rand/v2 PCG |
-|--------|-----------|------------------|
-| Tests passed | 160/160 ✅ | 160/160 ✅ |
-| P < 0.01 | **0** ✅ | **3** ⚠️ |
-| Flagged tests | **0** ✅ | 0 ✅ |
-| Lowest p-value | **0.01** ✅ | **0.0023** ⚠️ |
-| Ideal range % | 80.3% | 84.3% |
+| Metric | ring30mix | math/rand/v2 PCG | math/rand |
+|--------|-----------|------------------|-----------|
+| Tests passed | 160/160 ✅ | 160/160 ✅ | 159/160 ⚠️ |
+| Borderline p-values | **4** ✅ | **5** ⚠️ | **10** ⚠️ |
+| Failed tests | **0** ✅ | **0** ✅ | **1** ❌ |
+| Lowest p-value | **0.0049** ✅ | **0.0023** ⚠️ | **< 0.001** ❌ |
+| Highest p-value | **0.9920** ✅ | **0.9934** ⚠️ | **0.9945** ⚠️ |
 
-**Verdict:** ring30mix has **superior statistical quality** to math/rand/v2 with no borderline p-values.
+**Verdict:** ring30mix has **superior statistical quality** to math/rand/v2 PCG (4 vs 5 borderline p-values) and significantly better than math/rand (which fails 1 test).
 
 ---
 

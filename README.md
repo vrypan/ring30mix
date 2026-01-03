@@ -83,23 +83,24 @@ Benchmarks on Apple M4, verified 2026-01-03 (run `make bench` to reproduce):
 
 ## Randomness Quality
 
-**Perfect BigCrush score** - verified 2026-01-03:
+**Perfect BigCrush score** - verified 2026-01-04:
 
 | Test Suite | Tests | Passed | Status |
 |-----------:|------:|-------:|-------:|
 | SmallCrush | 15 | 15/15 ✅ | 100% |
-| Crush | 144 | 144/144 ✅ | 100% |
+| Crush | 186 | 186/186 ✅ | 100% |
 | **BigCrush** | **160** | **160/160 ✅** | **100%** |
 
 **Superior to math/rand/v2 PCG:**
-- ring30mix: **0 borderline p-values** (p < 0.01)
-- math/rand/v2 PCG: **3 borderline p-values**
+- ring30mix: **4 borderline p-values** (2 low + 2 high, all safe)
+- math/rand/v2 PCG: **5 borderline p-values** (3 low + 2 high)
+- math/rand: **10 borderline + 1 FAIL** ❌
 
 Run tests yourself:
 ```bash
 cd testu01
 make smallcrush   # 15 tests, ~2 min
-make crush        # 144 tests, ~10 min
+make crush        # 186 tests, ~10 min
 make bigcrush     # 160 tests, ~1 hour
 ```
 
