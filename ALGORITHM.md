@@ -190,14 +190,14 @@ The mixing function provides:
 
 ### Statistical Quality
 
-**TestU01 Results** (verified 2026-01-03):
+**TestU01 Results** (verified 2026-01-04):
 
-| Test Suite | Tests | Passed | Success Rate |
-|------------|-------|--------|--------------|
+| Test Suite | P-values | Passed | Success Rate |
+|------------|----------|--------|--------------|
 | SmallCrush | 15 | 15 ✅ | 100% |
 | Crush | 186 | 186 ✅ | 100% |
-| **BigCrush** | **160** | **160 ✅** | **100%** |
-| **TOTAL** | **361** | **361 ✅** | **100%** |
+| **BigCrush** | **254** | **254 ✅** | **100%** |
+| **TOTAL** | **455** | **455 ✅** | **100%** |
 
 **BigCrush p-value distribution (verified 2026-01-04):**
 - Borderline p-values (< 0.01 or > 0.99): **4** (2 low, 2 high)
@@ -209,9 +209,9 @@ The mixing function provides:
 
 | Metric | ring30mix | math/rand/v2 PCG | math/rand |
 |--------|-----------|------------------|-----------|
-| Tests passed | 160/160 ✅ | 160/160 ✅ | 159/160 ⚠️ |
+| P-values passed | 254/254 ✅ | 254/254 ✅ | 253/254 ⚠️ |
 | Borderline p-values | **4** ✅ | **5** ⚠️ | **10** ⚠️ |
-| Failed tests | **0** ✅ | **0** ✅ | **1** ❌ |
+| Failed p-values | **0** ✅ | **0** ✅ | **1** ❌ |
 | Lowest p-value | **0.0049** ✅ | **0.0023** ⚠️ | **< 0.001** ❌ |
 | Highest p-value | **0.9920** ✅ | **0.9934** ⚠️ | **0.9945** ⚠️ |
 

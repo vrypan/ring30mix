@@ -3,7 +3,7 @@
 High-performance pseudo-random number generator based on Rule 30 cellular automaton with golden ratio mixing.
 
 - **~2× faster** than Go's math/rand/v2 PCG
-- **Perfect BigCrush score** (160/160) with superior p-value distribution
+- **Perfect BigCrush score** (254/254 p-values) with superior distribution
 
 See [ALGORITHM.md](ALGORITHM.md) for details.
 
@@ -85,11 +85,11 @@ Benchmarks on Apple M4, verified 2026-01-03 (run `make bench` to reproduce):
 
 **Perfect BigCrush score** - verified 2026-01-04:
 
-| Test Suite | Tests | Passed | Status |
-|-----------:|------:|-------:|-------:|
+| Test Suite | P-values | Passed | Status |
+|-----------:|---------:|-------:|-------:|
 | SmallCrush | 15 | 15/15 ✅ | 100% |
 | Crush | 186 | 186/186 ✅ | 100% |
-| **BigCrush** | **160** | **160/160 ✅** | **100%** |
+| **BigCrush** | **254** | **254/254 ✅** | **100%** |
 
 **Superior to math/rand/v2 PCG:**
 - ring30mix: **4 borderline p-values** (2 low + 2 high, all safe)
@@ -99,9 +99,9 @@ Benchmarks on Apple M4, verified 2026-01-03 (run `make bench` to reproduce):
 Run tests yourself:
 ```bash
 cd testu01
-make smallcrush   # 15 tests, ~2 min
-make crush        # 186 tests, ~10 min
-make bigcrush     # 160 tests, ~1 hour
+make smallcrush   # 15 p-values, ~2 min
+make crush        # 186 p-values, ~10 min
+make bigcrush     # 254 p-values, ~1 hour
 ```
 
 ## How It Works
